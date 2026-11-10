@@ -33,6 +33,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.vercel
 frontend/dist/
 frontend/node_modules/
 notes-app/
