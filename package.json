@@ -1,22 +1,28 @@
 {
-  "name": "dataforge-ai",
+  "name": "gestura-ai",
   "version": "1.0.0",
-  "description": "DataForge AI — AI-Powered Data Collection & Preprocessing SaaS Platform",
+  "description": "GESTURA AI — Intelligent Hand Gesture Computer Control System with MediaPipe AI & PyAutoGUI",
   "scripts": {
     "dev": "npm run start:frontend",
     "start:frontend": "cd frontend && npm run dev",
     "build:frontend": "cd frontend && npm run build",
+    "preview:frontend": "cd frontend && npm run preview",
     "start:backend": "./venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload",
-    "preprocess:script": "./venv/bin/python3 scripts/preprocess.py",
-    "test": "./venv/bin/python3 -c \"import pandas, numpy, sklearn, fastapi; print('Python tests passed!')\" && cd frontend && npm run build"
+    "test:backend": "./venv/bin/python3 -c \"from backend.main import app; print('Backend verification passed!')\"",
+    "test": "npm run test:backend && npm run build:frontend"
   },
   "keywords": [
-    "data-preprocessing",
-    "machine-learning",
-    "feature-engineering",
-    "data-science",
-    "uci-adult-census"
+    "gesture-control",
+    "mediapipe",
+    "computer-vision",
+    "pyautogui",
+    "hand-tracking",
+    "touchless-computing",
+    "ai-agent",
+    "fastapi",
+    "threejs",
+    "react"
   ],
-  "author": "DataForge AI Team",
+  "author": "GESTURA AI Team",
   "license": "MIT"
 }
