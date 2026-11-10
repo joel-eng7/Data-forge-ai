@@ -1,10 +1,11 @@
 /**
  * GESTURA AI — Frontend API & WebSocket Service Layer
- * Fully typed client communicating with FastAPI backend.
+ * Fully typed client communicating with FastAPI backend and SQLite data layer.
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
-const WS_BASE_URL = 'ws://127.0.0.1:8000/ws';
+const metaEnv = (import.meta as any).env || {};
+const API_BASE_URL = metaEnv.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const WS_BASE_URL = metaEnv.VITE_WS_BASE_URL || 'ws://127.0.0.1:8000/ws';
 
 export interface BackendStatus {
   status: string;
@@ -35,15 +36,15 @@ export interface SystemSettings {
   click_delay: number;
   scroll_speed: number;
   volume_sensitivity: number;
+  smoothing_factor?: number;
   left_handed_mode: boolean;
   enabled_gestures: Record<string, boolean>;
   screen_width?: number;
   screen_height?: number;
-  smoothing_factor?: number;
   platform?: string;
 }
 
-export interface ActivityLogItem {
+export interface ActivityLogEntry {
   id: string;
   timestamp: string;
   action: string;
@@ -51,10 +52,119 @@ export interface ActivityLogItem {
   success: boolean;
 }
 
+export type ActivityLogItem = ActivityLogEntry;
+
+export interface LandmarkPoint {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface GesturePrediction {
+  gesture: string;
+  raw_gesture: string;
+  name: string;
+  action: string;
+  emoji: string;
+  color: string;
+  confidence: number;
+  probabilities: Record<string, number>;
+  finger_states: {
+    thumb: boolean;
+    index: boolean;
+    middle: boolean;
+    ring: boolean;
+    pinky: boolean;
+  };
+  metrics: {
+    pinch_distance: number;
+    two_finger_pinch_distance: number;
+    index_middle_distance: number;
+    scroll_delta_y: number;
+    fingertip: { x: number; y: number };
+    hand_scale: number;
+  };
+  latency_ms: number;
+  is_confirmed: boolean;
+  model_source: string;
+  action_executed?: string | null;
+}
+
+export interface GesturePreset {
+  gesture: string;
+  name: string;
+  action: string;
+  emoji: string;
+  color: string;
+  description: string;
+  landmarks: LandmarkPoint[];
+}
+
+export interface ModelMetrics {
+  model_name: string;
+  total_samples: number;
+  feature_count: number;
+  test_samples: number;
+  accuracy: number;
+  macro_f1: number;
+  cv_accuracy_mean: number;
+  cv_accuracy_std: number;
+  confusion_matrix: number[][];
+  classes: string[];
+  classification_report: Record<string, {
+    precision: number;
+    recall: number;
+    'f1-score': number;
+    support: number;
+  }>;
+  top_features: Array<{ name: string; importance: number }>;
+  inference_latency_ms: number;
+  trained_timestamp: string;
+}
+
+export interface BenchmarkResult {
+  suite: string;
+  noise_level: number;
+  total_samples: number;
+  accuracy: number;
+  avg_latency_ms: number;
+  min_latency_ms: number;
+  max_latency_ms: number;
+  class_breakdown: Record<string, {
+    samples: number;
+    correct: number;
+    accuracy: number;
+    status: string;
+  }>;
+  status: string;
+  evaluated_at: string;
+  benchmark_id: string;
+}
+
+export interface TelemetryLog {
+  id: number;
+  session_id: string;
+  gesture: string;
+  confidence: number;
+  action: string;
+  latency_ms: number;
+  timestamp: string;
+}
+
 export const api = {
+  async getHealth(): Promise<{ status: string; service: string; version: string; model_loaded: boolean } | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/health`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+
   async getStatus(): Promise<BackendStatus | null> {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/status`, { signal: AbortSignal.timeout(2000) });
+      const res = await fetch(`${API_BASE_URL}/api/status`);
       if (!res.ok) return null;
       return await res.json();
     } catch {
@@ -64,7 +174,7 @@ export const api = {
 
   async getSettings(): Promise<SystemSettings | null> {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/settings`, { signal: AbortSignal.timeout(2000) });
+      const res = await fetch(`${API_BASE_URL}/api/settings`);
       if (!res.ok) return null;
       return await res.json();
     } catch {
@@ -72,26 +182,23 @@ export const api = {
     }
   },
 
-  async updateSettings(settings: Partial<SystemSettings>): Promise<boolean> {
+  async updateSettings(settings: Partial<SystemSettings>): Promise<{ status: string; settings: SystemSettings } | null> {
     try {
       const res = await fetch(`${API_BASE_URL}/api/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
-        signal: AbortSignal.timeout(2000)
       });
-      return res.ok;
+      if (!res.ok) return null;
+      return await res.json();
     } catch {
-      return false;
+      return null;
     }
   },
 
   async triggerEmergencyStop(): Promise<boolean> {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/emergency-stop`, {
-        method: 'POST',
-        signal: AbortSignal.timeout(1500)
-      });
+      const res = await fetch(`${API_BASE_URL}/api/emergency-stop`, { method: 'POST' });
       return res.ok;
     } catch {
       return false;
@@ -100,19 +207,16 @@ export const api = {
 
   async resumeControls(): Promise<boolean> {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/resume`, {
-        method: 'POST',
-        signal: AbortSignal.timeout(1500)
-      });
+      const res = await fetch(`${API_BASE_URL}/api/resume`, { method: 'POST' });
       return res.ok;
     } catch {
       return false;
     }
   },
 
-  async getActivityLog(): Promise<ActivityLogItem[]> {
+  async getActivityLog(): Promise<ActivityLogEntry[]> {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/activity-log`, { signal: AbortSignal.timeout(2000) });
+      const res = await fetch(`${API_BASE_URL}/api/activity-log`);
       if (!res.ok) return [];
       return await res.json();
     } catch {
@@ -120,26 +224,88 @@ export const api = {
     }
   },
 
-  async setVolume(level: number): Promise<number | null> {
+  async setVolume(level: number): Promise<boolean> {
     try {
       const res = await fetch(`${API_BASE_URL}/api/volume`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ level }),
-        signal: AbortSignal.timeout(1500)
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
+
+  async predictGesture(landmarks: LandmarkPoint[], triggerAction: boolean = false, sessionId: string = 'web_session'): Promise<GesturePrediction | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ landmarks, trigger_action: triggerAction, session_id: sessionId }),
       });
       if (!res.ok) return null;
-      const data = await res.json();
-      return data.volume;
+      return await res.json();
     } catch {
       return null;
+    }
+  },
+
+  async getPresets(): Promise<Record<string, GesturePreset>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/presets`);
+      if (!res.ok) return {};
+      return await res.json();
+    } catch {
+      return {};
+    }
+  },
+
+  async getModelInfo(): Promise<ModelMetrics | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/model-info`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+
+  async runBenchmark(suite: string = 'surgical', samplesPerGesture: number = 25): Promise<BenchmarkResult | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/benchmark`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suite, samples_per_gesture: samplesPerGesture }),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+
+  async getBenchmarksHistory(): Promise<BenchmarkResult[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/benchmarks/history`);
+      if (!res.ok) return [];
+      return await res.json();
+    } catch {
+      return [];
+    }
+  },
+
+  async getTelemetryHistory(): Promise<TelemetryLog[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/telemetry`);
+      if (!res.ok) return [];
+      return await res.json();
+    } catch {
+      return [];
     }
   }
 };
 
-/**
- * WebSocket Client with auto-reconnect
- */
 export class WebSocketClient {
   private ws: WebSocket | null = null;
   private url: string;
@@ -156,22 +322,23 @@ export class WebSocketClient {
     if (onMessage) this.onMessageCallback = onMessage;
     if (onStatusChange) this.onStatusCallback = onStatusChange;
 
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
     try {
       this.ws = new WebSocket(this.url);
 
       this.ws.onopen = () => {
         this.isConnected = true;
         if (this.onStatusCallback) this.onStatusCallback(true);
-        console.log('[GesturaWS] Connected to backend');
       };
 
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           if (this.onMessageCallback) this.onMessageCallback(data);
-        } catch (e) {
-          console.error('[GesturaWS] Parse error:', e);
-        }
+        } catch {}
       };
 
       this.ws.onclose = () => {
@@ -181,8 +348,7 @@ export class WebSocketClient {
       };
 
       this.ws.onerror = () => {
-        this.isConnected = false;
-        if (this.onStatusCallback) this.onStatusCallback(false);
+        this.ws?.close();
       };
     } catch {
       this.scheduleReconnect();
@@ -190,13 +356,12 @@ export class WebSocketClient {
   }
 
   private scheduleReconnect() {
-    if (this.reconnectTimer) return;
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null;
-      if (!this.isConnected && this.onMessageCallback) {
-        this.connect(this.onMessageCallback, this.onStatusCallback || undefined);
-      }
-    }, 2500);
+    if (!this.reconnectTimer) {
+      this.reconnectTimer = setTimeout(() => {
+        this.reconnectTimer = null;
+        this.connect();
+      }, 3000);
+    }
   }
 
   send(data: any) {
@@ -229,6 +394,13 @@ export class WebSocketClient {
       action,
       payload
     });
+  }
+
+  subscribe(callback: (data: any) => void) {
+    this.onMessageCallback = callback;
+    return () => {
+      this.onMessageCallback = null;
+    };
   }
 
   disconnect() {
