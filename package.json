@@ -1,0 +1,22 @@
+{
+  "name": "dataforge-ai",
+  "version": "1.0.0",
+  "description": "DataForge AI — AI-Powered Data Collection & Preprocessing SaaS Platform",
+  "scripts": {
+    "dev": "npm run start:frontend",
+    "start:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "start:backend": "./venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload",
+    "preprocess:script": "./venv/bin/python3 scripts/preprocess.py",
+    "test": "./venv/bin/python3 -c \"import pandas, numpy, sklearn, fastapi; print('Python tests passed!')\" && cd frontend && npm run build"
+  },
+  "keywords": [
+    "data-preprocessing",
+    "machine-learning",
+    "feature-engineering",
+    "data-science",
+    "uci-adult-census"
+  ],
+  "author": "DataForge AI Team",
+  "license": "MIT"
+}
