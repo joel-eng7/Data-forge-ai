@@ -1,16 +1,13 @@
 import React from 'react';
 import {
   History,
-  CheckCircle,
-  XCircle,
   Trash2,
   Terminal,
   MousePointer,
   MousePointerClick,
   ArrowUpDown,
   Volume2,
-  AlertTriangle,
-  Lock
+  Lock,
 } from 'lucide-react';
 import { ActivityLogItem } from '../services/api';
 
@@ -28,157 +25,105 @@ export default function ActivityMonitor({
   const getActionIcon = (action: string) => {
     switch (action) {
       case 'LEFT_CLICK':
-        return <MousePointerClick className="w-3.5 h-3.5 text-pink-500" />;
+        return <MousePointerClick className="w-3.5 h-3.5 text-gestura-text" />;
       case 'RIGHT_CLICK':
-        return <MousePointerClick className="w-3.5 h-3.5 text-purple-500" />;
+        return <MousePointerClick className="w-3.5 h-3.5 text-gestura-yellowHover" />;
       case 'MOUSE_MOVE':
-        return <MousePointer className="w-3.5 h-3.5 text-rose-500" />;
+        return <MousePointer className="w-3.5 h-3.5 text-gestura-text" />;
       case 'SCROLL':
-        return <ArrowUpDown className="w-3.5 h-3.5 text-amber-500" />;
+        return <ArrowUpDown className="w-3.5 h-3.5 text-gestura-text" />;
       case 'VOLUME_CHANGE':
-        return <Volume2 className="w-3.5 h-3.5 text-emerald-500" />;
+        return <Volume2 className="w-3.5 h-3.5 text-gestura-yellowHover" />;
       case 'EMERGENCY_STOP':
-        return <Lock className="w-3.5 h-3.5 text-red-500" />;
+        return <Lock className="w-3.5 h-3.5 text-gestura-text" />;
       default:
-        return <Terminal className="w-3.5 h-3.5 text-slate-500" />;
+        return <Terminal className="w-3.5 h-3.5 text-gestura-textSubtle" />;
     }
   };
 
   return (
-    <div className="rounded-3xl p-6 glass-panel border border-rose-200/60 shadow-soft flex flex-col gap-4">
+    <div className="rounded-3xl p-6 bg-white border border-gestura-border shadow-card-soft flex flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-rose-100">
+      <div className="flex items-center justify-between pb-3 border-b border-gestura-border">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-400 to-pink-500 text-white flex items-center justify-center shadow-soft">
+          <div className="w-9 h-9 rounded-xl bg-gestura-yellow text-gestura-text flex items-center justify-center shadow-yellow-subtle font-bold">
             <History className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-display font-bold text-slate-800 text-lg">Activity Monitor</h3>
-            <p className="text-xs text-slate-500">Live Stream of Detected Gestures & Desktop Executions</p>
+            <h3 className="font-display font-bold text-gestura-text text-lg">Activity Audit Monitor</h3>
+            <p className="text-xs text-gestura-textMuted font-mono">Real-Time Stream of Actions & Detections</p>
           </div>
         </div>
 
-        <button
-          onClick={onClearLog}
-          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-          title="Clear Activity Log"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {activityLog.length > 0 && (
+          <button
+            onClick={onClearLog}
+            className="p-1.5 rounded-lg bg-gestura-surface hover:bg-gestura-goldLight text-gestura-textMuted hover:text-gestura-text transition-colors border border-gestura-border"
+            title="Clear Activity Log"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      {/* Two columns: Left = Executed Computer Actions, Right = Recent Detected Gestures */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* 1. Computer Control Executions */}
-        <div className="rounded-2xl bg-white/70 border border-rose-100 p-3.5 flex flex-col">
-          <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-              Desktop Automation Actions
-            </span>
-            <span className="text-[10px] font-mono font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-              {activityLog.length} events
-            </span>
-          </div>
+      {/* Split Log Lists: Executed Actions vs Detected Gestures */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Left: Executed Actions Log */}
+        <div className="space-y-2">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gestura-textMuted block">
+            Executed Actions ({activityLog.length})
+          </span>
 
-          <div className="h-60 overflow-y-auto pr-1 space-y-2">
+          <div className="h-44 overflow-y-auto space-y-1.5 pr-1">
             {activityLog.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-4 text-slate-400">
-                <Terminal className="w-6 h-6 mb-1 text-slate-300" />
-                <p className="text-xs">No desktop events executed yet.</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">
-                  Point with index finger or pinch to trigger actions.
-                </p>
+              <div className="h-full flex items-center justify-center text-xs text-gestura-textSubtle font-mono">
+                No actions executed yet.
               </div>
             ) : (
               activityLog.map((item) => (
                 <div
                   key={item.id}
-                  className="p-2.5 rounded-xl bg-slate-50/80 hover:bg-rose-50/50 border border-slate-150 transition-colors flex items-center justify-between gap-3 text-xs"
+                  className="p-2 rounded-xl bg-gestura-surface border border-gestura-border text-xs flex items-center justify-between font-mono"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="p-1.5 rounded-lg bg-white shadow-xs border border-slate-100 shrink-0">
-                      {getActionIcon(item.action)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-slate-800 truncate">
-                        {item.action}
-                      </p>
-                      <p className="text-[11px] text-slate-500 truncate">
-                        {item.details}
-                      </p>
+                  <div className="flex items-center gap-2">
+                    {getActionIcon(item.action)}
+                    <div>
+                      <span className="font-bold text-gestura-text block">{item.action}</span>
+                      <span className="text-[10px] text-gestura-textMuted">{item.details}</span>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-mono text-[10px] text-slate-400">
-                      {item.timestamp}
-                    </span>
-                    {item.success ? (
-                      <span className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold flex items-center gap-0.5">
-                        <CheckCircle className="w-2.5 h-2.5" /> OK
-                      </span>
-                    ) : (
-                      <span className="px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-semibold flex items-center gap-0.5">
-                        <XCircle className="w-2.5 h-2.5" /> ERR
-                      </span>
-                    )}
-                  </div>
+                  <span className="text-[10px] text-gestura-textSubtle shrink-0">{item.timestamp}</span>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        {/* 2. Detected Gestures Stream */}
-        <div className="rounded-2xl bg-white/70 border border-rose-100 p-3.5 flex flex-col">
-          <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-              Recent Confirmed Gestures
-            </span>
-            <span className="text-[10px] font-mono font-bold text-pink-500 bg-pink-50 px-2 py-0.5 rounded-full border border-pink-200">
-              Live Feed
-            </span>
-          </div>
+        {/* Right: Recent AI Detections */}
+        <div className="space-y-2">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gestura-textMuted block">
+            Recent Detections ({recentDetections.length})
+          </span>
 
-          <div className="h-60 overflow-y-auto pr-1 space-y-2">
+          <div className="h-44 overflow-y-auto space-y-1.5 pr-1">
             {recentDetections.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-4 text-slate-400">
-                <History className="w-6 h-6 mb-1 text-slate-300" />
-                <p className="text-xs">No gestures logged yet.</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">
-                  Face your hand towards the webcam.
-                </p>
+              <div className="h-full flex items-center justify-center text-xs text-gestura-textSubtle font-mono">
+                Searching for hands...
               </div>
             ) : (
               recentDetections.map((det) => (
                 <div
                   key={det.id}
-                  className="p-2.5 rounded-xl bg-slate-50/80 hover:bg-pink-50/50 border border-slate-150 transition-colors flex items-center justify-between gap-3 text-xs"
+                  className="p-2 rounded-xl bg-gestura-surface border border-gestura-border text-xs flex items-center justify-between font-mono"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-lg">
-                      {det.gesture === 'OPEN_PALM' ? '🖐️' :
-                       det.gesture === 'INDEX_POINTING' ? '👉' :
-                       det.gesture === 'PINCH' ? '👌' :
-                       det.gesture === 'TWO_FINGER_PINCH' ? '🤏' :
-                       det.gesture === 'VICTORY' ? '✌️' :
-                       det.gesture === 'CLOSED_FIST' ? '✊' :
-                       det.gesture === 'THUMBS_UP' ? '👍' : '✋🏻'}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-gestura-yellow" />
                     <div>
-                      <p className="font-semibold text-slate-800">{det.name}</p>
-                      <p className="text-[10px] font-mono text-slate-400">{det.gesture}</p>
+                      <span className="font-bold text-gestura-text block">{det.name}</span>
+                      <span className="text-[10px] text-gestura-textMuted">Confidence: {det.confidence}%</span>
                     </div>
                   </div>
-
-                  <div className="text-right">
-                    <span className="font-mono text-[10px] text-slate-400 block">
-                      {det.timestamp}
-                    </span>
-                    <span className="font-mono text-[11px] font-bold text-rose-600">
-                      {det.confidence}%
-                    </span>
-                  </div>
+                  <span className="text-[10px] text-gestura-textSubtle shrink-0">{det.timestamp}</span>
                 </div>
               ))
             )}

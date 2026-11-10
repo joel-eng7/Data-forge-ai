@@ -139,6 +139,9 @@ export interface BenchmarkResult {
   status: string;
   evaluated_at: string;
   benchmark_id: string;
+  id?: string;
+  suite_name?: string;
+  created_at?: string;
 }
 
 export interface TelemetryLog {

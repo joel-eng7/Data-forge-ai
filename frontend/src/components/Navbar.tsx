@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Hand,
   Sparkles,
   Menu,
   X,
-  ShieldCheck,
-  Zap
+  ArrowRight,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -20,10 +18,11 @@ export default function Navbar({ isEngineReady = true }: NavbarProps) {
   const navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Gesture Library', path: '/gestures' },
+    { label: '3D Gestures', path: '/gestures' },
     { label: 'How It Works', path: '/#how-it-works' },
+    { label: 'Features', path: '/#features' },
+    { label: 'Architecture', path: '/about' },
     { label: 'Settings', path: '/settings' },
-    { label: 'About', path: '/about' },
   ];
 
   const isActive = (path: string) => {
@@ -34,40 +33,40 @@ export default function Navbar({ isEngineReady = true }: NavbarProps) {
   };
 
   return (
-    <nav className="sticky top-0 z-50 px-4 sm:px-6 lg:px-8 py-3.5 backdrop-blur-xl bg-white/85 border-b border-rose-100/80 transition-all">
+    <nav className="sticky top-0 z-50 px-4 sm:px-6 lg:px-8 py-3.5 backdrop-blur-2xl bg-white/95 border-b border-gestura-border transition-all shadow-xs">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500 via-pink-500 to-rose-400 text-white flex items-center justify-center shadow-soft group-hover:shadow-glow-pink group-hover:scale-105 transition-all">
-            <Hand className="w-5 h-5 text-white" />
+        <Link to="/" className="flex items-center gap-3 group select-none">
+          <div className="w-10 h-10 rounded-2xl bg-gestura-yellow text-gestura-text flex items-center justify-center shadow-yellow-subtle group-hover:scale-105 transition-all">
+            <Sparkles className="w-5 h-5 text-gestura-text fill-gestura-text" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-display font-black text-xl tracking-tight text-slate-900 group-hover:text-rose-600 transition-colors">
+              <span className="font-display font-black text-xl tracking-tight text-gestura-text">
                 GESTURA
               </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-600 font-extrabold tracking-wider">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gestura-yellow text-gestura-text font-mono font-bold tracking-wider border border-gestura-yellowHover">
                 AI
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium tracking-wide">
-              Control Beyond Touch
+            <p className="text-[10px] text-gestura-textMuted font-mono font-medium -mt-0.5">
+              Touchless Spatial Computing
             </p>
           </div>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <div className="hidden md:flex items-center gap-1 bg-rose-50/50 p-1.5 rounded-2xl border border-rose-100/60">
+        <div className="hidden md:flex items-center gap-1 bg-gestura-surface p-1.5 rounded-2xl border border-gestura-border backdrop-blur-md shadow-xs">
           {navLinks.map((link) => {
             const active = isActive(link.path);
             return (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all select-none ${
                   active
-                    ? 'bg-white text-rose-600 shadow-xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    ? 'bg-gestura-yellow text-gestura-text shadow-yellow-subtle border border-gestura-yellowHover'
+                    : 'text-gestura-textMuted hover:text-gestura-text hover:bg-gestura-goldLight'
                 }`}
               >
                 {link.label}
@@ -76,57 +75,58 @@ export default function Navbar({ isEngineReady = true }: NavbarProps) {
           })}
         </div>
 
-        {/* Right Action & Status */}
-        <div className="hidden sm:flex items-center gap-3">
-          {/* Engine Status Badge */}
-          <div className="px-3 py-1.5 rounded-full bg-white/80 border border-rose-200/80 shadow-xs flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="text-xs font-medium text-slate-700">
-              AI Engine Ready
-            </span>
+        {/* Live Status Indicator & Launch CTA */}
+        <div className="hidden lg:flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-gestura-border text-xs font-mono shadow-xs">
+            <span className={`w-2 h-2 rounded-full ${isEngineReady ? 'bg-gestura-yellow animate-pulse' : 'bg-gray-400'}`} />
+            <span className="text-gestura-textMuted font-medium">Engine</span>
+            <span className="font-bold text-gestura-text">{isEngineReady ? 'ACTIVE' : 'STANDBY'}</span>
           </div>
 
           <Link
             to="/dashboard"
-            className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold text-xs sm:text-sm shadow-soft hover:shadow-glow-pink hover:brightness-105 active:scale-95 transition-all flex items-center gap-2"
+            className="px-4 py-2 rounded-xl bg-gestura-yellow hover:bg-gestura-yellowHover text-gestura-text font-bold text-xs shadow-yellow-subtle hover:shadow-yellow-glow transition-all active:scale-95 flex items-center gap-1.5"
           >
-            <Sparkles className="w-4 h-4 text-rose-100" />
-            Launch Control
+            Launch Live Console
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {/* Mobile Hamburger Button */}
         <button
-          onClick={() => setMobileMenuOpen(prev => !prev)}
-          className="md:hidden p-2 rounded-xl text-slate-700 hover:bg-rose-50"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 rounded-xl bg-white border border-gestura-border text-gestura-text hover:bg-gestura-goldLight"
+          aria-label="Toggle Navigation Menu"
         >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden pt-4 pb-3 border-t border-rose-100 mt-3 space-y-1">
+        <div className="md:hidden mt-3 p-4 rounded-2xl bg-white border border-gestura-border shadow-card-glass backdrop-blur-2xl space-y-2">
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+              className={`block px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                isActive(link.path)
+                  ? 'bg-gestura-yellow text-gestura-text'
+                  : 'text-gestura-text hover:bg-gestura-surface'
+              }`}
             >
               {link.label}
             </Link>
           ))}
-          <div className="pt-3">
+          <div className="pt-2 border-t border-gestura-border">
             <Link
               to="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-sm text-center shadow-soft block"
+              className="w-full py-3 rounded-xl bg-gestura-yellow text-gestura-text font-bold text-xs flex items-center justify-center gap-2 shadow-yellow-subtle"
             >
-              Launch Gesture Control
+              Launch Live Console
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>

@@ -1,7 +1,7 @@
 """
 GESTURA AI — Hand Tracking Pipeline
 Processes webcam frames or image buffers through MediaPipe HandLandmarker,
-extracting 21 3D hand landmarks, calculating latency and drawing stylized pink/white visuals.
+extracting 21 3D hand landmarks, calculating latency and drawing stylized yellow/white cybernetic visuals.
 """
 
 import time
@@ -127,7 +127,7 @@ class HandTracker:
 
     def draw_styled_landmarks(self, frame_bgr: np.ndarray, landmarks_list: List[Dict[str, float]]) -> np.ndarray:
         """
-        Renders elegant pink, rose, and white glowing hand skeleton on the frame.
+        Renders elegant bright yellow and pure white glowing cybernetic hand skeleton on the frame.
         """
         h, w, _ = frame_bgr.shape
         overlay = frame_bgr.copy()
@@ -135,14 +135,14 @@ class HandTracker:
         # Convert normalized coords to pixel coords
         pts = [(int(lm["x"] * w), int(lm["y"] * h)) for lm in landmarks_list]
 
-        # Draw bone connections with soft glowing pink lines
+        # Draw bone connections with soft glowing bright yellow lines
         for p1_idx, p2_idx in HAND_CONNECTIONS:
             pt1 = pts[p1_idx]
             pt2 = pts[p2_idx]
-            # Outer glow line (rose pink)
-            cv2.line(overlay, pt1, pt2, (203, 114, 244), 4, cv2.LINE_AA)
-            # Inner bright line (white-pink)
-            cv2.line(frame_bgr, pt1, pt2, (255, 235, 245), 2, cv2.LINE_AA)
+            # Outer glow line (bright yellow #FFD633 -> BGR: 51, 214, 255)
+            cv2.line(overlay, pt1, pt2, (51, 214, 255), 4, cv2.LINE_AA)
+            # Inner bright line (pure white #FFFFFF)
+            cv2.line(frame_bgr, pt1, pt2, (255, 255, 255), 2, cv2.LINE_AA)
 
         # Blend glow overlay
         cv2.addWeighted(overlay, 0.45, frame_bgr, 0.55, 0, frame_bgr)
@@ -150,15 +150,15 @@ class HandTracker:
         # Draw key landmark joints
         for i, pt in enumerate(pts):
             if i in [4, 8, 12, 16, 20]:  # Fingertips
-                # Outer circle
-                cv2.circle(frame_bgr, pt, 7, (180, 80, 240), -1, cv2.LINE_AA)
-                # Core circle
+                # Outer circle (bright golden yellow)
+                cv2.circle(frame_bgr, pt, 7, (27, 194, 245), -1, cv2.LINE_AA)
+                # Core circle (pure white)
                 cv2.circle(frame_bgr, pt, 4, (255, 255, 255), -1, cv2.LINE_AA)
             elif i == 0:  # Wrist
-                cv2.circle(frame_bgr, pt, 8, (150, 50, 230), -1, cv2.LINE_AA)
+                cv2.circle(frame_bgr, pt, 8, (15, 170, 230), -1, cv2.LINE_AA)
                 cv2.circle(frame_bgr, pt, 4, (255, 255, 255), -1, cv2.LINE_AA)
             else:  # Joints
-                cv2.circle(frame_bgr, pt, 4, (220, 140, 245), -1, cv2.LINE_AA)
+                cv2.circle(frame_bgr, pt, 4, (51, 214, 255), -1, cv2.LINE_AA)
                 cv2.circle(frame_bgr, pt, 2, (255, 255, 255), -1, cv2.LINE_AA)
 
         return frame_bgr

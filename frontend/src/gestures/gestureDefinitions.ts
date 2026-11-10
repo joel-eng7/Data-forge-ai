@@ -1,7 +1,7 @@
 /**
  * GESTURA AI — Gesture Definitions & Specifications
  * Full catalogue of 7 computer control gestures with actions, 3D poses, and instructions.
- * Strictly adheres to the Premium Pink & White 3D Theme.
+ * Adheres strictly to the Premium Pink & White 3D Design Direction.
  */
 
 export interface GestureDefinition {
@@ -33,14 +33,14 @@ export const GESTURE_DEFINITIONS: Record<string, GestureDefinition> = {
     name: 'Open Palm',
     action: 'Activate / Pause Cursor Mode',
     category: 'cursor',
-    description: 'Extends all five fingers in a relaxed, open hand position to activate or pause gesture tracking.',
-    howToPerform: 'Spread all five fingers comfortably facing the camera. Hold steady for 0.3s to toggle.',
+    description: 'Extends all five fingers in a relaxed, open hand position to toggle or steady spatial tracking.',
+    howToPerform: 'Spread all five fingers comfortably facing the camera. Hold steady for 0.2s to calibrate.',
     iconName: 'Hand',
     emoji: '🖐️',
-    color: '#FB7185',
-    accentBg: 'bg-rose-50 border-rose-200 text-rose-700',
-    badge: 'Tracking Toggle',
-    thresholdTips: 'Requires all 5 fingers extended. Keeps your cursor ready without unintended movements.',
+    color: '#FFD633',
+    accentBg: 'bg-gestura-goldLight/80 border-gestura-yellow/50 text-gestura-text',
+    badge: 'Tracking Ready',
+    thresholdTips: 'Requires all 5 fingers extended. Keeps your cursor steady without unintended drifts.',
     poseRotations: {
       thumb: [0, 0, 0],
       index: [0, 0, 0],
@@ -59,8 +59,8 @@ export const GESTURE_DEFINITIONS: Record<string, GestureDefinition> = {
     howToPerform: 'Extend only your index finger while keeping middle, ring, and pinky curled into your palm.',
     iconName: 'MousePointer',
     emoji: '👉',
-    color: '#F43F5E',
-    accentBg: 'bg-rose-100/60 border-rose-300 text-rose-800',
+    color: '#F5C21B',
+    accentBg: 'bg-gestura-yellow/25 border-gestura-yellow text-gestura-text font-semibold',
     badge: 'Primary Cursor',
     thresholdTips: 'Sub-millimeter jitter suppression and configurable sensitivity ensure pinpoint precision.',
     poseRotations: {
@@ -75,15 +75,15 @@ export const GESTURE_DEFINITIONS: Record<string, GestureDefinition> = {
   PINCH: {
     id: 'PINCH',
     name: 'Pinch (Thumb + Index)',
-    action: 'Left Mouse Click',
+    action: 'Left Mouse Click / Drag',
     category: 'click',
-    description: 'Brings thumb and index fingertips together within proximity threshold to trigger a crisp left mouse click.',
-    howToPerform: 'Bring the tips of your thumb and index finger together to pinch. Release to complete click.',
+    description: 'Brings thumb and index fingertips together within proximity threshold to trigger a crisp left mouse click, or hold to drag.',
+    howToPerform: 'Bring the tips of your thumb and index finger together to pinch. Hold to drag, release to drop.',
     iconName: 'CheckCircle',
     emoji: '👌',
-    color: '#EC4899',
-    accentBg: 'bg-pink-100/70 border-pink-300 text-pink-800',
-    badge: 'Primary Click',
+    color: '#EAB308',
+    accentBg: 'bg-amber-50 border-amber-300 text-amber-950',
+    badge: 'Click & Drag',
     thresholdTips: 'Equipped with a 350ms cooldown timer to prevent accidental multi-clicks or double clicks.',
     poseRotations: {
       thumb: [40, -15, 15],
@@ -97,14 +97,14 @@ export const GESTURE_DEFINITIONS: Record<string, GestureDefinition> = {
   TWO_FINGER_PINCH: {
     id: 'TWO_FINGER_PINCH',
     name: 'Two-Finger Pinch',
-    action: 'Right Mouse Click',
+    action: 'Right Click / Context Menu',
     category: 'click',
-    description: 'Brings thumb and middle fingertips (or index and middle) together to instantly open contextual menus.',
+    description: 'Brings thumb and middle fingertips together to instantly open contextual menus or secondary toolbars.',
     howToPerform: 'Pinch your thumb and middle fingertip together while keeping other fingers comfortably back.',
     iconName: 'MousePointerClick',
     emoji: '🤏',
-    color: '#D946EF',
-    accentBg: 'bg-fuchsia-100/60 border-fuchsia-300 text-fuchsia-800',
+    color: '#CA8A04',
+    accentBg: 'bg-yellow-50 border-yellow-300 text-yellow-950',
     badge: 'Context Menu',
     thresholdTips: 'Triggers a native right-click event on Windows, macOS, and Linux desktop environments.',
     poseRotations: {
@@ -125,8 +125,8 @@ export const GESTURE_DEFINITIONS: Record<string, GestureDefinition> = {
     howToPerform: 'Form a peace / victory sign with index and middle fingers extended. Move hand vertically to scroll.',
     iconName: 'ArrowUpDown',
     emoji: '✌️',
-    color: '#A855F7',
-    accentBg: 'bg-purple-100/60 border-purple-300 text-purple-800',
+    color: '#FFD633',
+    accentBg: 'bg-gestura-goldLight border-gestura-yellow/60 text-gestura-text',
     badge: 'Smooth Scroll',
     thresholdTips: 'Vertical velocity is dynamically amplified based on your custom scroll speed setting.',
     poseRotations: {
@@ -147,8 +147,8 @@ export const GESTURE_DEFINITIONS: Record<string, GestureDefinition> = {
     howToPerform: 'Clench all fingers tightly into a ball or fist. The system locks position safely.',
     iconName: 'ShieldAlert',
     emoji: '✊',
-    color: '#E11D48',
-    accentBg: 'bg-rose-100 border-rose-300 text-rose-900',
+    color: '#171717',
+    accentBg: 'bg-neutral-900 border-neutral-700 text-white',
     badge: 'Safety Lock',
     thresholdTips: 'Instant failsafe trigger. No mouse clicks or drag events can happen while fist is held.',
     poseRotations: {
@@ -163,14 +163,14 @@ export const GESTURE_DEFINITIONS: Record<string, GestureDefinition> = {
   THUMBS_UP: {
     id: 'THUMBS_UP',
     name: 'Thumbs Up',
-    action: 'Activate Confirmation Mode',
+    action: 'Confirm / Mode Select',
     category: 'system',
     description: 'Thumb pointing upward with remaining fingers folded. Confirms dialogues, dialog buttons, or modal choices.',
     howToPerform: 'Point your thumb straight up towards the ceiling with other four fingers curled into your palm.',
     iconName: 'ThumbsUp',
     emoji: '👍',
-    color: '#10B981',
-    accentBg: 'bg-emerald-100/70 border-emerald-300 text-emerald-800',
+    color: '#FACC15',
+    accentBg: 'bg-amber-100/90 border-amber-400 text-neutral-900',
     badge: 'Confirmation',
     thresholdTips: 'Checks upward vertical orientation vector relative to hand wrist landmark.',
     poseRotations: {

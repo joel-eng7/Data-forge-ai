@@ -23,8 +23,10 @@ export interface DetectedGestureState {
     scrollDeltaY: number;
     fingertip: { x: number; y: number };
   };
-  isConfirmed: boolean;
+  isConfirmed?: boolean;
 }
+
+export type GestureResult = DetectedGestureState;
 
 export function useHandDetection(
   videoRef: React.RefObject<HTMLVideoElement>,

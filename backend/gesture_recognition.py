@@ -22,7 +22,7 @@ class GestureMLClassifier:
             "name": "No Hand Detected",
             "action": "Standby",
             "emoji": "✋🏻",
-            "color": "#94A3B8",
+            "color": "#71717A",
             "description": "Camera active, waiting for hand entrance."
         },
         "OPEN_PALM": {
@@ -41,23 +41,23 @@ class GestureMLClassifier:
         },
         "PINCH": {
             "name": "Pinch (Thumb + Index)",
-            "action": "Left Click",
+            "action": "Left Click / Drag",
             "emoji": "👌",
-            "color": "#E5B800",
-            "description": "Thumb and index contact. Triggers left click."
+            "color": "#EAB308",
+            "description": "Thumb and index contact. Triggers left click or hold to drag."
         },
         "TWO_FINGER_PINCH": {
             "name": "Two-Finger Pinch",
             "action": "Right Click / Context Menu",
             "emoji": "🤏",
-            "color": "#D4A106",
+            "color": "#CA8A04",
             "description": "Thumb and middle contact. Opens context menu."
         },
         "VICTORY": {
             "name": "Victory / Peace (2 Fingers)",
             "action": "Vertical Scrolling",
             "emoji": "✌️",
-            "color": "#FFE680",
+            "color": "#FFD633",
             "description": "Index and middle extended in V. Vertical motion scrolls."
         },
         "CLOSED_FIST": {
@@ -71,7 +71,7 @@ class GestureMLClassifier:
             "name": "Thumbs Up",
             "action": "Confirmation / Select",
             "emoji": "👍",
-            "color": "#FFD633",
+            "color": "#FACC15",
             "description": "Thumb points upward. Confirms active dialog."
         }
     }

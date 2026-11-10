@@ -43,3 +43,5 @@ notes-app/
 Thumbs.db
 *.log
 *.db
+frontend/.vercel
+.env*.local

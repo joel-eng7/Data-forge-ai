@@ -29,7 +29,7 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#FFFFFF] via-[#FFF8FA] to-[#FFF0F4] text-slate-800 transition-colors">
+      <div className="min-h-screen flex flex-col bg-[#FAF9F4] text-gestura-text antialiased selection:bg-gestura-yellow selection:text-gestura-text">
         <Navbar />
         <main className="flex-1">
           <Routes>

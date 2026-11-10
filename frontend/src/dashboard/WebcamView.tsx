@@ -3,43 +3,22 @@ import {
   Camera,
   CameraOff,
   FlipHorizontal,
-  RefreshCw,
+  Layers,
+  Sparkles,
+  Maximize2,
+  Minimize2,
+  AlertCircle,
+  Hash,
   Eye,
   EyeOff,
-  Sparkles,
-  AlertCircle,
-  ShieldAlert,
-  Layers,
-  Activity,
-  Zap
+  Target,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
-import { Landmark, DetectedGestureState } from './useHandDetection';
-import { CameraDevice, CameraStatus } from './useCamera';
+import { GestureResult } from './useHandDetection';
+import { audioFeedback } from '../utils/audioFeedback';
 
-interface WebcamViewProps {
-  videoRef: React.RefObject<HTMLVideoElement>;
-  cameraStatus: CameraStatus;
-  errorMessage: string;
-  devices: CameraDevice[];
-  currentDeviceId: string;
-  isMirrored: boolean;
-  setIsMirrored: (val: boolean | ((prev: boolean) => boolean)) => void;
-  startCamera: (devId?: string) => Promise<void>;
-  stopCamera: () => void;
-  switchCamera: (devId: string) => Promise<void>;
-  landmarks: Landmark[] | null;
-  allHandsLandmarks: Landmark[][];
-  handCount: number;
-  currentGesture: DetectedGestureState;
-  fps: number;
-  latency: number;
-  isDemoMode: boolean;
-  setIsDemoMode: (val: boolean | ((prev: boolean) => boolean)) => void;
-  modelStatus: string;
-}
-
-// MediaPipe 21 Hand Connections
-const HAND_CONNECTIONS: [number, number][] = [
+export const HAND_CONNECTIONS: [number, number][] = [
   [0, 1], [1, 2], [2, 3], [3, 4],
   [0, 5], [5, 6], [6, 7], [7, 8],
   [5, 9], [9, 10], [10, 11], [11, 12],
@@ -48,53 +27,73 @@ const HAND_CONNECTIONS: [number, number][] = [
   [0, 17]
 ];
 
+interface WebcamViewProps {
+  videoRef: any;
+  cameraStatus: string;
+  errorMessage: string | null;
+  landmarks: Array<{ x: number; y: number; z: number }> | null;
+  allHandsLandmarks: Array<Array<{ x: number; y: number; z: number }>> | null;
+  currentGesture: GestureResult;
+  fps: number;
+  latency: number;
+  isMirrored: boolean;
+  setIsMirrored: React.Dispatch<React.SetStateAction<boolean>>;
+  isDemoMode: boolean;
+  setIsDemoMode: React.Dispatch<React.SetStateAction<boolean>>;
+  startCamera: () => Promise<void>;
+  stopCamera: () => void;
+  devices: any[];
+  currentDeviceId: string;
+  switchCamera: (deviceId: string) => Promise<void>;
+  modelStatus?: string;
+}
+
 export default function WebcamView({
   videoRef,
   cameraStatus,
   errorMessage,
-  devices,
-  currentDeviceId,
-  isMirrored,
-  setIsMirrored,
-  startCamera,
-  stopCamera,
-  switchCamera,
   landmarks,
   allHandsLandmarks,
-  handCount,
   currentGesture,
   fps,
   latency,
+  isMirrored,
+  setIsMirrored,
   isDemoMode,
   setIsDemoMode,
+  startCamera,
+  stopCamera,
+  devices,
+  currentDeviceId,
+  switchCamera,
   modelStatus
 }: WebcamViewProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Visualization Toggles
-  const [showSkeleton, setShowSkeleton] = useState<boolean>(true);
-  const [showLandmarkPoints, setShowLandmarkPoints] = useState<boolean>(true);
-  const [showBoundingBox, setShowBoundingBox] = useState<boolean>(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isAudioMuted, setIsAudioMuted] = useState(audioFeedback.isMuted);
+  const [showSkeleton, setShowSkeleton] = useState(true);
+  const [showLandmarkPoints, setShowLandmarkPoints] = useState(true);
+  const [showBoundingBox, setShowBoundingBox] = useState(true);
+  const [showLandmarkLabels, setShowLandmarkLabels] = useState(false);
 
-  // Synchronize Canvas with Video Resolution
+  // Play auditory click on gesture change
   useEffect(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
+    if (currentGesture.gesture !== 'NO_HAND') {
+      audioFeedback.playGestureSound(currentGesture.gesture);
+    }
+  }, [currentGesture.gesture]);
 
-    const handleLoadedMetadata = () => {
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-    };
+  const activeHands = allHandsLandmarks && allHandsLandmarks.length > 0
+    ? allHandsLandmarks
+    : landmarks
+    ? [landmarks]
+    : [];
 
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    return () => {
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-    };
-  }, [videoRef]);
+  const handCount = activeHands.length;
 
-  // High-Performance 2D Skeleton Drawing Loop (Bright Yellow & Pure White)
+  // Real-Time Canvas Rendering: 21 Landmarks + Cybernetic Yellow Bones & HUD
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -103,265 +102,447 @@ export default function WebcamView({
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (!landmarks || landmarks.length < 21 || (!showSkeleton && !showLandmarkPoints)) return;
+    if (activeHands.length === 0) return;
 
     const w = canvas.width;
     const h = canvas.height;
 
-    const handsToRender = allHandsLandmarks.length > 0 ? allHandsLandmarks : [landmarks];
+    activeHands.forEach((hand) => {
+      // Compute Bounding Box Coordinates
+      let bMinX = w, bMaxX = 0, bMinY = h, bMaxY = 0;
+      hand.forEach((lm) => {
+        const x = (isMirrored ? 1 - lm.x : lm.x) * w;
+        const y = lm.y * h;
+        if (x < bMinX) bMinX = x;
+        if (x > bMaxX) bMaxX = x;
+        if (y < bMinY) bMinY = y;
+        if (y > bMaxY) bMaxY = y;
+      });
 
-    handsToRender.forEach((hand) => {
-      // 1. Draw Skeleton Bones
+      // Add padding
+      const pad = 24;
+      bMinX = Math.max(0, bMinX - pad);
+      bMaxX = Math.min(w, bMaxX + pad);
+      bMinY = Math.max(0, bMinY - pad);
+      bMaxY = Math.min(h, bMaxY + pad);
+      const bW = bMaxX - bMinX;
+      const bH = bMaxY - bMinY;
+
+      // Draw Biometric Corner Brackets [ ]
+      if (showBoundingBox) {
+        const bracketLen = Math.min(22, bW * 0.2);
+        ctx.save();
+        ctx.strokeStyle = currentGesture.gesture === 'CLOSED_FIST' ? '#171717' : '#FFD633';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+
+        // Top-Left
+        ctx.beginPath();
+        ctx.moveTo(bMinX, bMinY + bracketLen);
+        ctx.lineTo(bMinX, bMinY);
+        ctx.lineTo(bMinX + bracketLen, bMinY);
+        ctx.stroke();
+
+        // Top-Right
+        ctx.beginPath();
+        ctx.moveTo(bMaxX - bracketLen, bMinY);
+        ctx.lineTo(bMaxX, bMinY);
+        ctx.lineTo(bMaxX, bMinY + bracketLen);
+        ctx.stroke();
+
+        // Bottom-Left
+        ctx.beginPath();
+        ctx.moveTo(bMinX, bMaxY - bracketLen);
+        ctx.lineTo(bMinX, bMaxY);
+        ctx.lineTo(bMinX + bracketLen, bMaxY);
+        ctx.stroke();
+
+        // Bottom-Right
+        ctx.beginPath();
+        ctx.moveTo(bMaxX - bracketLen, bMaxY);
+        ctx.lineTo(bMaxX, bMaxY);
+        ctx.lineTo(bMaxX, bMaxY - bracketLen);
+        ctx.stroke();
+
+        // Tag Label
+        ctx.fillStyle = '#FFD633';
+        ctx.fillRect(bMinX, bMinY - 18, 95, 16);
+        ctx.fillStyle = '#171717';
+        ctx.font = 'bold 9px JetBrains Mono, monospace';
+        ctx.fillText(`LOCKED ${currentGesture.confidence}%`, bMinX + 6, bMinY - 6);
+
+        ctx.restore();
+      }
+
+      // 2. Draw Pinch Tension Line between Thumb Tip (4) and Index Tip (8)
+      const pThumb = hand[4];
+      const pIndex = hand[8];
+      if (pThumb && pIndex) {
+        const tx = (isMirrored ? 1 - pThumb.x : pThumb.x) * w;
+        const ty = pThumb.y * h;
+        const ix = (isMirrored ? 1 - pIndex.x : pIndex.x) * w;
+        const iy = pIndex.y * h;
+        const pinchDist = Math.hypot(tx - ix, ty - iy);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(ix, iy);
+        const isPinching = currentGesture.gesture === 'PINCH';
+        ctx.strokeStyle = isPinching ? '#FFD633' : pinchDist < 45 ? '#F5C21B' : 'rgba(255, 214, 51, 0.40)';
+        ctx.lineWidth = isPinching ? 3 : 1.5;
+        ctx.setLineDash(isPinching ? [] : [4, 4]);
+        ctx.stroke();
+
+        // Pinch trigger ripple
+        if (isPinching) {
+          const midX = (tx + ix) / 2;
+          const midY = (ty + iy) / 2;
+          ctx.beginPath();
+          ctx.arc(midX, midY, 14, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 214, 51, 0.35)';
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // 3. Draw Skeleton Bones
       if (showSkeleton) {
         ctx.save();
-        HAND_CONNECTIONS.forEach(([i, j]) => {
-          const p1 = hand[i];
-          const p2 = hand[j];
+        HAND_CONNECTIONS.forEach(([startIdx, endIdx]: [number, number]) => {
+          const p1 = hand[startIdx];
+          const p2 = hand[endIdx];
           if (!p1 || !p2) return;
 
-          const x1 = isMirrored ? (1 - p1.x) * w : p1.x * w;
+          const x1 = (isMirrored ? 1 - p1.x : p1.x) * w;
           const y1 = p1.y * h;
-          const x2 = isMirrored ? (1 - p2.x) * w : p2.x * w;
+          const x2 = (isMirrored ? 1 - p2.x : p2.x) * w;
           const y2 = p2.y * h;
 
-          // Outer Yellow Glow Bone
+          // Outer Glow
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
-          ctx.strokeStyle = 'rgba(255, 214, 51, 0.65)';
-          ctx.lineWidth = 5;
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = 'rgba(255, 214, 51, 0.35)';
           ctx.lineCap = 'round';
           ctx.stroke();
 
-          // Inner Crisp White Bone
+          // Inner Bright Line
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
-          ctx.strokeStyle = '#FFFFFF';
           ctx.lineWidth = 2;
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineCap = 'round';
           ctx.stroke();
         });
         ctx.restore();
       }
 
-      // 2. Draw Landmark Joints
+      // 4. Draw Landmark Nodes & Rings
       if (showLandmarkPoints) {
         hand.forEach((lm, idx) => {
-          const x = isMirrored ? (1 - lm.x) * w : lm.x * w;
+          const x = (isMirrored ? 1 - lm.x : lm.x) * w;
           const y = lm.y * h;
 
-          const isFingertip = [4, 8, 12, 16, 20].includes(idx);
+          const isFingertip = idx in { 4: true, 8: true, 12: true, 16: true, 20: true };
           const isWrist = idx === 0;
 
           ctx.save();
           if (isFingertip) {
-            // Fingertip Glowing Yellow Aura
+            // Glow aura
             ctx.beginPath();
             ctx.arc(x, y, 9, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 214, 51, 0.45)';
+            ctx.fillStyle = idx === 8 ? 'rgba(255, 214, 51, 0.55)' : 'rgba(245, 194, 27, 0.40)';
             ctx.fill();
 
-            // Core Dot
+            // Core
             ctx.beginPath();
             ctx.arc(x, y, 5, 0, Math.PI * 2);
-            ctx.fillStyle = '#FFD633';
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 2;
+            ctx.fillStyle = idx === 8 ? '#FFD633' : '#F5C21B';
             ctx.fill();
+            ctx.lineWidth = 1.8;
+            ctx.strokeStyle = '#FFFFFF';
             ctx.stroke();
           } else if (isWrist) {
-            // Wrist Marker
             ctx.beginPath();
-            ctx.arc(x, y, 7, 0, Math.PI * 2);
-            ctx.fillStyle = '#171717';
-            ctx.strokeStyle = '#FFD633';
-            ctx.lineWidth = 2;
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFD633';
             ctx.fill();
+            ctx.lineWidth = 1.8;
+            ctx.strokeStyle = '#FFFFFF';
             ctx.stroke();
           } else {
-            // Internal Phalangeal Nodes
+            // Joint
             ctx.beginPath();
-            ctx.arc(x, y, 3.8, 0, Math.PI * 2);
-            ctx.fillStyle = '#FFFFFF';
-            ctx.strokeStyle = '#FFD633';
-            ctx.lineWidth = 1.5;
+            ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#FEF08A';
             ctx.fill();
+            ctx.lineWidth = 1.2;
+            ctx.strokeStyle = '#FFFFFF';
             ctx.stroke();
+          }
+
+          if (showLandmarkLabels) {
+            ctx.font = '9px JetBrains Mono, monospace';
+            ctx.fillStyle = '#FFD633';
+            ctx.fillText(`${idx}`, x + 6, y - 4);
           }
           ctx.restore();
         });
       }
-
-      // 3. Draw Bounding Box & HUD
-      if (showBoundingBox) {
-        let minX = 1, maxX = 0, minY = 1, maxY = 0;
-        hand.forEach(p => {
-          if (p.x < minX) minX = p.x;
-          if (p.x > maxX) maxX = p.x;
-          if (p.y < minY) minY = p.y;
-          if (p.y > maxY) maxY = p.y;
-        });
-
-        const pad = 0.04;
-        const bx = isMirrored ? (1 - Math.min(1, maxX + pad)) * w : Math.max(0, minX - pad) * w;
-        const bw = Math.min(1, maxX - minX + pad * 2) * w;
-        const by = Math.max(0, minY - pad) * h;
-        const bh = Math.min(1, maxY - minY + pad * 2) * h;
-
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255, 214, 51, 0.85)';
-        ctx.lineWidth = 1.8;
-        ctx.setLineDash([6, 4]);
-        ctx.strokeRect(bx, by, bw, bh);
-
-        // Header Label Tag
-        ctx.fillStyle = '#171717';
-        ctx.fillRect(bx, Math.max(0, by - 22), 140, 22);
-
-        ctx.fillStyle = '#FFD633';
-        ctx.font = 'bold 11px JetBrains Mono, monospace';
-        ctx.fillText(`${currentGesture.name.toUpperCase()} ${(currentGesture.confidence * 100).toFixed(0)}%`, bx + 6, Math.max(15, by - 7));
-        ctx.restore();
-      }
     });
-  }, [landmarks, allHandsLandmarks, isMirrored, showSkeleton, showLandmarkPoints, showBoundingBox, currentGesture]);
+  }, [landmarks, allHandsLandmarks, isMirrored, showSkeleton, showLandmarkPoints, showBoundingBox, showLandmarkLabels, currentGesture]);
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current && canvasRef.current) {
+      canvasRef.current.width = videoRef.current.videoWidth || 640;
+      canvasRef.current.height = videoRef.current.videoHeight || 480;
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    if (!isFullscreen) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen().catch(() => {});
+        setIsFullscreen(true);
+      }
+    } else {
+      document.exitFullscreen().catch(() => {});
+      setIsFullscreen(false);
+    }
+  };
+
+  const isCameraActive = cameraStatus === 'active';
 
   return (
-    <div className="flex flex-col gap-3 w-full">
-      {/* Video Viewport Container */}
-      <div
-        ref={containerRef}
-        className="relative aspect-video w-full rounded-2xl overflow-hidden bg-[#171717] border-2 border-gestura-border shadow-card-soft group"
-      >
-        {/* Hidden / Active Video Element */}
+    <div
+      ref={containerRef}
+      className={`relative rounded-3xl overflow-hidden bg-white border border-gestura-border shadow-card-glass flex flex-col transition-all ${
+        isFullscreen ? 'p-0 rounded-none fixed inset-0 z-50 bg-black' : ''
+      }`}
+    >
+      {/* Video Preview Viewport */}
+      <div className="relative w-full aspect-[4/3] sm:aspect-video bg-[#171717] flex items-center justify-center overflow-hidden">
+        {/* Active Video Element */}
         <video
           ref={videoRef}
+          autoPlay
           playsInline
           muted
+          onLoadedMetadata={handleLoadedMetadata}
           className={`w-full h-full object-cover transition-transform duration-200 ${
-            isMirrored ? 'scale-x-[-1]' : ''
-          } ${cameraStatus === 'active' ? 'opacity-100' : 'opacity-0'}`}
+            isMirrored ? '-scale-x-100' : ''
+          } ${isCameraActive ? 'block' : 'hidden'}`}
         />
 
-        {/* 2D Skeletal Tracking Canvas Overlay */}
+        {/* Real-Time Landmark Canvas Overlay */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none z-10"
+          width={640}
+          height={480}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10"
         />
 
-        {/* HUD Top Bar: Status, FPS, Latency */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-none">
-          <div className="flex items-center gap-2">
-            <div className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-md border border-gestura-border text-[11px] font-mono font-bold text-gestura-text flex items-center gap-2 shadow-sm pointer-events-auto">
-              <span className={`w-2 h-2 rounded-full ${cameraStatus === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
-              {cameraStatus === 'active' ? 'CAM LIVE' : 'CAM STANDBY'}
+        {/* Demo Mode Simulated Background */}
+        {isDemoMode && !isCameraActive && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1A14] via-[#171717] to-[#121212] backdrop-blur-sm text-center p-6 z-0">
+            <div className="w-16 h-16 rounded-2xl bg-gestura-yellow/20 border border-gestura-yellow/40 flex items-center justify-center mb-3 animate-pulse shadow-yellow-glow">
+              <Sparkles className="w-8 h-8 text-gestura-yellow fill-gestura-yellow" />
             </div>
-
-            {cameraStatus === 'active' && (
-              <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-mono font-medium text-white/90 flex items-center gap-3">
-                <span className="text-gestura-yellow font-bold">{fps} FPS</span>
-                <span className="text-white/60">|</span>
-                <span>{latency} ms</span>
-              </div>
-            )}
+            <p className="text-gestura-yellow font-semibold text-lg">Interactive 3D Demo Stream</p>
+            <p className="text-gray-300 text-sm max-w-sm mt-1">
+              Simulating natural hand gestures and landmark tracking in real-time. Connect your webcam below for live camera control.
+            </p>
           </div>
+        )}
 
-          {/* Quick HUD Controls */}
-          <div className="flex items-center gap-1.5 pointer-events-auto">
-            <button
-              onClick={() => setIsMirrored(prev => !prev)}
-              title="Mirror Camera Feed"
-              className="p-2 rounded-xl bg-white/90 hover:bg-white text-gestura-text border border-gestura-border shadow-sm transition-all active:scale-95"
-            >
-              <FlipHorizontal className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setShowSkeleton(prev => !prev)}
-              title={showSkeleton ? "Hide Kinematic Skeleton" : "Show Kinematic Skeleton"}
-              className={`p-2 rounded-xl border shadow-sm transition-all active:scale-95 ${
-                showSkeleton ? 'bg-gestura-yellow text-gestura-text border-gestura-yellow' : 'bg-white/90 text-gestura-textSubtle border-gestura-border'
-              }`}
-            >
-              {showSkeleton ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Active Gesture Overlay Pill (Floating Bottom Left) */}
-        {cameraStatus === 'active' && handCount > 0 && (
-          <div className="absolute bottom-3 left-3 z-20 pointer-events-none">
-            <div className="px-4 py-2.5 rounded-2xl bg-white/95 backdrop-blur-md border border-gestura-yellow/40 shadow-yellow-subtle flex items-center gap-3">
-              <span className="text-2xl">{currentGesture.emoji}</span>
-              <div>
-                <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-gestura-textSubtle">
-                  Detected Intent
-                </div>
-                <div className="font-display font-bold text-gestura-text text-sm flex items-center gap-2">
-                  {currentGesture.name}
-                  <span className="px-1.5 py-0.5 rounded-md bg-gestura-goldLight text-gestura-text font-mono text-[10px] border border-gestura-yellow/30">
-                    {(currentGesture.confidence * 100).toFixed(0)}%
-                  </span>
-                </div>
-              </div>
+        {/* Idle / Camera Off State */}
+        {!isCameraActive && !isDemoMode && (
+          <div className="flex flex-col items-center justify-center text-center p-8 z-0">
+            <div className="w-20 h-20 rounded-3xl bg-gestura-yellow/10 border border-gestura-yellow/30 flex items-center justify-center mb-4 text-gestura-yellow shadow-yellow-glow">
+              <CameraOff className="w-10 h-10" />
+            </div>
+            <h3 className="text-white font-semibold text-xl">Camera is Paused</h3>
+            <p className="text-gray-300 text-sm max-w-md mt-2 mb-6">
+              Enable your webcam to start touchless hand gesture computer control, or launch Demo Mode to preview all 7 gestures immediately.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <button
+                onClick={() => startCamera()}
+                className="px-6 py-2.5 rounded-xl bg-gestura-yellow hover:bg-gestura-yellowHover text-gestura-text font-bold shadow-yellow-subtle hover:shadow-yellow-glow active:scale-95 transition-all flex items-center gap-2"
+              >
+                <Camera className="w-4 h-4 text-gestura-text" />
+                Enable Webcam
+              </button>
+              <button
+                onClick={() => setIsDemoMode(true)}
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-gestura-yellow border border-gestura-yellow/30 font-medium active:scale-95 transition-all flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-gestura-yellow fill-gestura-yellow" />
+                Launch Demo Mode
+              </button>
             </div>
           </div>
         )}
 
-        {/* Empty / Error / Inactive States */}
-        {cameraStatus !== 'active' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-[#FAF9F4]/95 backdrop-blur-sm">
-            <div className="w-14 h-14 rounded-2xl bg-gestura-goldLight border border-gestura-yellow/50 flex items-center justify-center mb-3 shadow-yellow-subtle">
-              <Camera className="w-7 h-7 text-gestura-text" />
+        {/* Error State Banner */}
+        {errorMessage && (
+          <div className="absolute top-4 inset-x-4 bg-red-950/90 border border-red-500/60 rounded-2xl p-4 text-white backdrop-blur-md flex items-start gap-3 z-30 shadow-lg">
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-red-200">Camera Access Notice</p>
+              <p className="mt-0.5 text-gray-200">{errorMessage}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Top Control Overlay Pill Badges */}
+        <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md border flex items-center gap-1.5 shadow-sm ${
+                isCameraActive
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
+                  : isDemoMode
+                  ? 'bg-gestura-yellow/20 text-gestura-yellow border-gestura-yellow/40'
+                  : 'bg-black/60 text-gray-300 border-gray-700'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isCameraActive ? 'bg-emerald-400 animate-ping' : isDemoMode ? 'bg-gestura-yellow' : 'bg-gray-400'
+                }`}
+              />
+              {isCameraActive ? 'Live Camera Feed' : isDemoMode ? 'Simulated AI Demo' : 'Webcam Standby'}
+            </span>
+
+            {handCount > 0 && (
+              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gestura-yellow text-gestura-text border border-gestura-yellowHover backdrop-blur-md">
+                {handCount} Hand{handCount > 1 ? 's' : ''} Locked
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 pointer-events-auto">
+            <span className="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-black/60 text-gray-200 border border-white/10 backdrop-blur-md">
+              {fps} FPS
+            </span>
+            <span className="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-black/60 text-gray-200 border border-white/10 backdrop-blur-md">
+              {latency}ms
+            </span>
+            <button
+              onClick={() => {
+                const muted = audioFeedback.toggleMute();
+                setIsAudioMuted(muted);
+              }}
+              className="p-1.5 rounded-full bg-black/60 text-gray-200 hover:text-white border border-white/10 backdrop-blur-md transition-all"
+              title={isAudioMuted ? 'Unmute Audio Feedback' : 'Mute Audio Feedback'}
+            >
+              {isAudioMuted ? <VolumeX className="w-3.5 h-3.5 text-gray-400" /> : <Volume2 className="w-3.5 h-3.5 text-gestura-yellow" />}
+            </button>
+            <button
+              onClick={toggleFullscreen}
+              className="p-1.5 rounded-full bg-black/60 text-gray-200 hover:text-white border border-white/10 backdrop-blur-md transition-all"
+              title="Toggle Fullscreen Preview"
+            >
+              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Floating Bottom Detected Gesture Bar */}
+        {(isCameraActive || isDemoMode) && (
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-3.5 rounded-2xl bg-white/95 border border-gestura-border shadow-card-glass backdrop-blur-md z-20">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl p-1.5 rounded-xl bg-gestura-goldLight border border-gestura-yellow/40 shadow-xs">
+                {currentGesture.emoji}
+              </span>
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-gestura-textMuted font-bold">Detected Gesture</p>
+                <p className="text-sm sm:text-base font-bold text-gestura-text">
+                  {currentGesture.name}
+                </p>
+                <p className="text-xs text-gestura-textMuted">
+                  <span className="font-semibold text-gestura-text">Action:</span> {currentGesture.action}
+                </p>
+              </div>
             </div>
 
-            <h3 className="font-display font-bold text-gestura-text text-lg mb-1">
-              {cameraStatus === 'requesting' ? 'Requesting Camera Access...' : 'Optical Camera Feed Standby'}
-            </h3>
-            <p className="text-xs text-gestura-textMuted max-w-sm mb-4">
-              {errorMessage || 'Enable your optical webcam to track 21 hand landmarks in real-time with sub-12ms AI inference.'}
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                onClick={() => startCamera()}
-                disabled={cameraStatus === 'requesting'}
-                className="px-5 py-2.5 rounded-xl bg-gestura-yellow hover:bg-gestura-yellowHover text-gestura-text font-bold text-sm shadow-yellow-subtle hover:shadow-yellow-glow transition-all active:scale-95 flex items-center gap-2"
-              >
-                <Camera className="w-4 h-4" />
-                {cameraStatus === 'requesting' ? 'Connecting...' : 'Start Camera Feed'}
-              </button>
+            <div className="text-right">
+              <span className="text-xs text-gestura-textMuted font-medium">Confidence Score</span>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-20 sm:w-28 h-2 rounded-full bg-gestura-surfaceAlt border border-gestura-border overflow-hidden">
+                  <div
+                    className="h-full bg-gestura-yellow transition-all duration-200 shadow-sm"
+                    style={{ width: `${currentGesture.confidence}%` }}
+                  />
+                </div>
+                <span className="text-xs font-mono font-bold text-gestura-text">
+                  {currentGesture.confidence}%
+                </span>
+              </div>
             </div>
           </div>
         )}
       </div>
 
       {/* Camera Toolbar Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-white border border-gestura-border shadow-sm">
+      <div className="p-4 bg-white flex flex-wrap items-center justify-between gap-3 border-t border-gestura-border">
         <div className="flex items-center gap-2">
-          {cameraStatus === 'active' ? (
+          {isCameraActive ? (
             <button
               onClick={stopCamera}
-              className="px-3.5 py-1.5 rounded-lg bg-gestura-surface hover:bg-rose-50 hover:text-rose-600 text-gestura-text font-medium text-xs border border-gestura-border transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-gestura-surface hover:bg-gestura-goldLight text-gestura-text text-xs font-bold border border-gestura-border flex items-center gap-1.5 transition-all active:scale-95 shadow-xs"
             >
-              <CameraOff className="w-3.5 h-3.5" />
-              Stop Camera
+              <CameraOff className="w-3.5 h-3.5 text-gestura-text" />
+              Turn Off Camera
             </button>
           ) : (
             <button
               onClick={() => startCamera()}
-              className="px-3.5 py-1.5 rounded-lg bg-gestura-yellow hover:bg-gestura-yellowHover text-gestura-text font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-gestura-yellow hover:bg-gestura-yellowHover text-gestura-text text-xs font-bold shadow-yellow-subtle flex items-center gap-1.5 transition-all active:scale-95"
             >
-              <Camera className="w-3.5 h-3.5" />
+              <Camera className="w-3.5 h-3.5 text-gestura-text" />
               Start Camera
             </button>
           )}
 
+          <button
+            onClick={() => setIsMirrored(prev => !prev)}
+            className={`px-3 py-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-all active:scale-95 ${
+              isMirrored
+                ? 'bg-gestura-goldLight border-gestura-yellow text-gestura-text font-bold shadow-xs'
+                : 'bg-white border-gestura-border text-gestura-textMuted hover:bg-gestura-surface'
+            }`}
+            title="Mirror webcam preview horizontally"
+          >
+            <FlipHorizontal className="w-3.5 h-3.5" />
+            Mirror
+          </button>
+
+          <button
+            onClick={() => setIsDemoMode(prev => !prev)}
+            className={`px-3 py-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-all active:scale-95 ${
+              isDemoMode
+                ? 'bg-gestura-goldLight border-gestura-yellow text-gestura-text font-bold shadow-xs'
+                : 'bg-white border-gestura-border text-gestura-textMuted hover:bg-gestura-surface'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-gestura-text" />
+            {isDemoMode ? 'Exit Demo' : 'Demo Stream'}
+          </button>
+        </div>
+
+        {/* Overlay toggles */}
+        <div className="flex items-center gap-2">
           {devices.length > 1 && (
             <select
               value={currentDeviceId}
               onChange={(e) => switchCamera(e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-gestura-surface text-gestura-text text-xs border border-gestura-border focus:outline-none focus:border-gestura-yellow"
+              className="px-2.5 py-1.5 rounded-xl text-xs bg-white border border-gestura-border text-gestura-text font-medium focus:outline-none focus:ring-2 focus:ring-gestura-yellow"
             >
               {devices.map((d) => (
                 <option key={d.deviceId} value={d.deviceId}>
@@ -370,13 +551,49 @@ export default function WebcamView({
               ))}
             </select>
           )}
-        </div>
 
-        <div className="flex items-center gap-2 text-[11px] font-mono text-gestura-textMuted">
-          <span className="flex items-center gap-1">
-            <Zap className="w-3.5 h-3.5 text-gestura-yellow" />
-            MediaPipe Vision 21 Landmarks
-          </span>
+          <button
+            onClick={() => setShowBoundingBox(prev => !prev)}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1 transition-all ${
+              showBoundingBox ? 'bg-gestura-goldLight border-gestura-yellow text-gestura-text font-bold' : 'bg-white border-gestura-border text-gestura-textSubtle'
+            }`}
+            title="Toggle biometric bounding brackets"
+          >
+            <Target className="w-3.5 h-3.5" />
+            HUD
+          </button>
+
+          <button
+            onClick={() => setShowSkeleton(prev => !prev)}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1 transition-all ${
+              showSkeleton ? 'bg-gestura-goldLight border-gestura-yellow text-gestura-text font-bold' : 'bg-white border-gestura-border text-gestura-textSubtle'
+            }`}
+            title="Toggle hand bones skeleton"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Skeleton
+          </button>
+
+          <button
+            onClick={() => setShowLandmarkPoints(prev => !prev)}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1 transition-all ${
+              showLandmarkPoints ? 'bg-gestura-goldLight border-gestura-yellow text-gestura-text font-bold' : 'bg-white border-gestura-border text-gestura-textSubtle'
+            }`}
+            title="Toggle 21 landmark nodes"
+          >
+            {showLandmarkPoints ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+            Points
+          </button>
+
+          <button
+            onClick={() => setShowLandmarkLabels(prev => !prev)}
+            className={`px-2 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1 transition-all ${
+              showLandmarkLabels ? 'bg-gestura-goldLight border-gestura-yellow text-gestura-text font-bold' : 'bg-white border-gestura-border text-gestura-textSubtle'
+            }`}
+            title="Toggle landmark ID indices 0-20"
+          >
+            <Hash className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </div>

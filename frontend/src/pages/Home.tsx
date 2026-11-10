@@ -14,325 +14,357 @@ import {
   CheckCircle,
   Volume2,
   Lock,
-  ArrowUpDown
+  ArrowUpDown,
+  CheckCircle2,
+  Scan,
+  Target,
+  Sliders,
+  Play
 } from 'lucide-react';
 import Hand3DCanvas from '../components/Hand3DCanvas';
 import { GESTURE_DEFINITIONS } from '../gestures/gestureDefinitions';
 
 export default function Home() {
-  const [selectedDemoGesture, setSelectedDemoGesture] = useState<string>('OPEN_PALM');
+  const [selectedDemoGesture, setSelectedDemoGesture] = useState<string>('INDEX_POINTING');
 
   const gestureList = Object.values(GESTURE_DEFINITIONS);
 
   const steps = [
     {
-      num: '01',
+      step: 'STEP 1',
       title: 'CAMERA INPUT',
-      desc: 'The webcam captures continuous live 60 FPS video frames without storing or transmitting personal video feeds.',
-      icon: <Video className="w-6 h-6 text-rose-500" />
+      desc: 'The webcam captures continuous live hand movements in real-time at 60 FPS, completely on-device without cloud video streaming.',
+      icon: <Video className="w-6 h-6 text-gestura-text" />
     },
     {
-      num: '02',
+      step: 'STEP 2',
       title: 'LANDMARK DETECTION',
-      desc: 'MediaPipe AI identifies 21 3D hand landmarks, isolating wrist, phalanx bones, joints, and fingertips in real time.',
-      icon: <Eye className="w-6 h-6 text-pink-500" />
+      desc: 'MediaPipe Vision AI identifies 21 3D hand landmarks, isolating wrist, phalanx bones, joints, and fingertips in under 8ms.',
+      icon: <Eye className="w-6 h-6 text-gestura-text" />
     },
     {
-      num: '03',
+      step: 'STEP 3',
       title: 'GESTURE RECOGNITION',
-      desc: 'Geometric classifiers compute finger angles, pinch proximities, and temporal hysteresis to verify intended gestures.',
-      icon: <Cpu className="w-6 h-6 text-purple-500" />
+      desc: 'The system analyzes landmark geometry, angles, and inter-joint distances to classify natural hand gestures with high confidence.',
+      icon: <Cpu className="w-6 h-6 text-gestura-text" />
     },
     {
-      num: '04',
+      step: 'STEP 4',
       title: 'COMPUTER EXECUTION',
-      desc: 'Confirmed gestures are translated into native desktop mouse coordinates, clicks, scrolling, and system volume.',
-      icon: <Zap className="w-6 h-6 text-emerald-500" />
+      desc: 'Recognized gestures are instantly translated into smooth mouse movements, clicks, scrolling, and volume actions via PyAutoGUI.',
+      icon: <Zap className="w-6 h-6 text-gestura-text" />
+    }
+  ];
+
+  const features = [
+    {
+      title: 'Anti-Tremor Cursor Tracking',
+      desc: 'Map your index fingertip to screen coordinates with Exponential Moving Average (EMA) smoothing for silky, tremor-free cursor control.',
+      icon: <MousePointer className="w-5 h-5 text-gestura-text" />
+    },
+    {
+      title: 'Crisp Pinch Left & Right Click',
+      desc: 'Detect thumb-index and thumb-middle contact distances with calibrated debouncing to trigger left clicks, drag-and-drop, and context menus.',
+      icon: <CheckCircle className="w-5 h-5 text-gestura-text" />
+    },
+    {
+      title: 'Natural Victory Scrolling',
+      desc: 'Raise two fingers in a Peace/Victory sign and move your hand vertically to scroll documents, codebases, and web pages effortlessly.',
+      icon: <ArrowUpDown className="w-5 h-5 text-gestura-text" />
+    },
+    {
+      title: 'Spatial Distance Volume Control',
+      desc: 'Dynamically modulate system master volume using the Euclidean distance between thumb and index finger with immediate feedback.',
+      icon: <Volume2 className="w-5 h-5 text-gestura-text" />
+    },
+    {
+      title: 'Instant Biometric Safe Stop',
+      desc: 'Clench into a closed fist or trigger the emergency stop button to instantly disarm mouse actions and release held buttons.',
+      icon: <ShieldCheck className="w-5 h-5 text-gestura-text" />
+    },
+    {
+      title: '100% Private On-Device AI',
+      desc: 'All computer-vision inference runs strictly in your local browser and local Python FastAPI daemon. No video ever leaves your machine.',
+      icon: <Lock className="w-5 h-5 text-gestura-text" />
     }
   ];
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Hero Section */}
-      <section className="relative pt-10 sm:pt-16 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Soft Pink Background Glow Blobs */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-pink-200/40 via-rose-100/30 to-purple-100/20 rounded-full blur-3xl pointer-events-none -z-10" />
+    <div className="space-y-24 pb-20 bg-[#FAF9F4] text-slate-900">
+      {/* 1. HERO SECTION */}
+      <section className="relative overflow-hidden pt-10 sm:pt-16 pb-16">
+        {/* Soft Pink Ambient Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[720px] h-[520px] bg-gradient-to-tr from-yellow-200/30 via-amber-100/20 to-transparent blur-[130px] rounded-full pointer-events-none -z-10" />
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left Column: Headlines & Call to Actions */}
-          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            {/* Live Status Indicator Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-rose-200/80 shadow-soft backdrop-blur-md">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
-              </span>
-              <span className="text-xs font-semibold text-rose-700 tracking-wide uppercase">
-                AI Engine Ready • Touchless Computing 2.0
-              </span>
-            </div>
-
-            {/* Main Headline */}
-            <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl text-slate-900 tracking-tight leading-[1.12]">
-              Your Hands.{' '}
-              <span className="text-gradient-rose">Your Computer.</span>
-              <br />Your Control.
-            </h1>
-
-            {/* Subtitle */}
-            <p className="text-base sm:text-lg text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-              Experience the future of touchless computing with intelligent AI-powered hand gesture recognition. Guide your cursor, click, scroll, and adjust volume without touching a keyboard or mouse.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
-              <Link
-                to="/dashboard"
-                className="px-7 py-4 rounded-2xl bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold text-sm sm:text-base shadow-glow-pink hover:shadow-soft-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2.5"
-              >
-                <Sparkles className="w-5 h-5 text-rose-100" />
-                Launch Gesture Control
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
-
-              <Link
-                to="/gestures"
-                className="px-6 py-4 rounded-2xl bg-white/90 hover:bg-white text-slate-700 font-semibold text-sm sm:text-base border border-rose-200/80 shadow-soft hover:shadow-soft-lg active:scale-95 transition-all flex items-center gap-2"
-              >
-                Explore 7 Gestures
-              </Link>
-            </div>
-
-            {/* Micro Feature Proof Badges */}
-            <div className="pt-6 grid grid-cols-3 gap-3 max-w-lg mx-auto lg:mx-0 border-t border-rose-100">
-              <div className="text-center lg:text-left">
-                <p className="font-display font-black text-xl text-slate-900">21</p>
-                <p className="text-[11px] text-slate-500">Hand Landmarks</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Left Content (7 cols) */}
+            <div className="lg:col-span-7 space-y-6 text-left">
+              {/* Status Pill: AI Engine Ready */}
+              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/90 border border-gestura-border shadow-xs text-xs font-mono font-bold text-slate-800 backdrop-blur-md">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-sm" />
+                <span className="text-slate-500 font-medium">Status:</span>
+                <span className="text-emerald-700 uppercase tracking-wide">AI Engine Ready</span>
+                <span className="text-slate-300">&bull;</span>
+                <span className="text-gestura-text">60 FPS Real-Time</span>
               </div>
-              <div className="text-center lg:text-left">
-                <p className="font-display font-black text-xl text-rose-600">60 FPS</p>
-                <p className="text-[11px] text-slate-500">Zero-Lag In-Browser</p>
-              </div>
-              <div className="text-center lg:text-left">
-                <p className="font-display font-black text-xl text-slate-900">100%</p>
-                <p className="text-[11px] text-slate-500">Local Privacy</p>
-              </div>
-            </div>
-          </div>
 
-          {/* Right Column: Large Interactive 3D Hand Model & Floating Gesture Cards */}
-          <div className="lg:col-span-5 relative flex items-center justify-center">
-            {/* Ambient Circular Glow Container */}
-            <div className="w-full max-w-[480px] aspect-square rounded-3xl p-2 relative bg-gradient-to-tr from-white/90 via-pink-50/50 to-white/80 border border-rose-200/70 shadow-card-glass backdrop-blur-xl">
-              {/* 3D WebGL Canvas */}
-              <Hand3DCanvas
-                currentGesture={selectedDemoGesture}
-                interactive={true}
-                autoRotate={true}
-                showParticles={true}
-                className="w-full h-full rounded-2xl"
-              />
+              {/* Main Headline */}
+              <h1 className="font-display font-black text-4xl sm:text-6xl text-gestura-text tracking-tight leading-[1.08]">
+                Your Hands.{' '}
+                <span className="bg-gestura-yellow px-2 py-0.5 rounded-xl text-gestura-text inline-block shadow-sm">
+                  Your Computer.
+                </span>{' '}
+                Touchless Control.
+              </h1>
 
-              {/* Floating Live Detected Gesture Badge */}
-              <div className="absolute top-4 left-4 p-3 rounded-2xl glass-panel-elevated flex items-center gap-2.5 shadow-soft z-20">
-                <span className="text-2xl">
-                  {GESTURE_DEFINITIONS[selectedDemoGesture]?.emoji || '🖐️'}
-                </span>
+              {/* Subtitle */}
+              <p className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
+                Experience the future of touchless computing with intelligent AI-powered hand gesture recognition. Move your cursor, click, scroll, and adjust volume using natural hand movements in front of your webcam.
+              </p>
+
+              {/* Primary & Secondary Buttons */}
+              <div className="flex flex-wrap items-center gap-3.5 pt-2">
+                <Link
+                  to="/dashboard"
+                  className="px-7 py-3.5 rounded-2xl bg-gestura-yellow hover:bg-gestura-yellowHover hover:bg-gestura-yellowHover text-white font-bold text-sm shadow-yellow-subtle hover:shadow-yellow-glow transition-all active:scale-95 flex items-center gap-2"
+                >
+                  <Play className="w-4 h-4 fill-white text-white" />
+                  Launch Gesture Control
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+
+                <a
+                  href="#features"
+                  className="px-6 py-3.5 rounded-2xl bg-white hover:bg-gestura-goldLight/70 text-slate-700 hover:text-gestura-text font-bold text-sm border border-gestura-border shadow-card-soft transition-all active:scale-95"
+                >
+                  Explore Features
+                </a>
+
+                <Link
+                  to="/gestures"
+                  className="px-5 py-3.5 rounded-2xl text-slate-500 hover:text-gestura-text font-bold text-xs font-mono transition-colors"
+                >
+                  3D Gesture Library &rarr;
+                </Link>
+              </div>
+
+              {/* Benchmark KPIs */}
+              <div className="grid grid-cols-3 gap-6 pt-6 border-t border-gestura-border text-xs font-mono text-slate-500">
                 <div>
-                  <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider block">
-                    3D Simulation Pose
+                  <span className="font-extrabold text-slate-900 text-2xl block font-display bg-gestura-yellow bg-clip-text text-transparent">
+                    21 Points
                   </span>
-                  <p className="text-xs font-bold text-slate-800">
-                    {GESTURE_DEFINITIONS[selectedDemoGesture]?.name || 'Open Palm'}
-                  </p>
+                  <span>3D Hand Skeleton</span>
+                </div>
+                <div>
+                  <span className="font-extrabold text-slate-900 text-2xl block font-display text-slate-900">
+                    &lt; 8 ms
+                  </span>
+                  <span>Inference Latency</span>
+                </div>
+                <div>
+                  <span className="font-extrabold text-slate-900 text-2xl block font-display text-emerald-600">
+                    100%
+                  </span>
+                  <span>Touchless Precision</span>
                 </div>
               </div>
+            </div>
 
-              {/* Floating Action Badge */}
-              <div className="absolute bottom-4 right-4 p-3 rounded-2xl glass-panel-elevated shadow-soft z-20">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                  Desktop Action
-                </span>
-                <p className="text-xs font-bold text-rose-600 flex items-center gap-1.5 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                  {GESTURE_DEFINITIONS[selectedDemoGesture]?.action}
-                </p>
+            {/* Right: Interactive 3D Hand Canvas with Floating Detected Gestures (5 cols) */}
+            <div className="lg:col-span-5 relative">
+              <div className="w-full h-[490px] rounded-3xl bg-white border border-gestura-border shadow-card-elevated overflow-hidden relative flex flex-col justify-between p-4 backdrop-blur-xl">
+                {/* 3D Hand Viewport */}
+                <Hand3DCanvas
+                  currentGesture={selectedDemoGesture}
+                  interactive={true}
+                  autoRotate={true}
+                  className="w-full h-full"
+                  zoom={1.05}
+                  showParticles={true}
+                />
+
+                {/* Floating Detected Gesture Badge 1: Top-Right */}
+                <div className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-2xl bg-white/90 backdrop-blur-md border border-gestura-border shadow-card-glass text-xs font-mono text-slate-800 flex items-center gap-2 animate-float-slow">
+                  <span className="w-2 h-2 rounded-full bg-gestura-goldLight0 animate-ping" />
+                  <span className="font-bold text-gestura-text">Index Point</span>
+                  <span className="text-slate-400">&bull;</span>
+                  <span className="text-slate-600">Move Pointer</span>
+                </div>
+
+                {/* Floating Detected Gesture Badge 2: Top-Left */}
+                <div className="absolute top-16 left-4 z-20 px-3 py-1.5 rounded-2xl bg-white/90 backdrop-blur-md border border-gestura-border shadow-card-glass text-xs font-mono text-slate-800 flex items-center gap-2">
+                  <span className="text-base">👌</span>
+                  <span className="font-bold text-gestura-text">Pinch</span>
+                  <span className="text-slate-400">&bull;</span>
+                  <span className="text-slate-600">Left Click</span>
+                </div>
+
+                {/* Floating Detected Gesture Badge 3: Mid-Right */}
+                <div className="absolute bottom-20 right-4 z-20 px-3 py-1.5 rounded-2xl bg-white/90 backdrop-blur-md border border-gestura-border shadow-card-glass text-xs font-mono text-slate-800 flex items-center gap-2">
+                  <span className="text-base">✌️</span>
+                  <span className="font-bold text-gestura-text">Victory</span>
+                  <span className="text-slate-400">&bull;</span>
+                  <span className="text-slate-600">Scroll</span>
+                </div>
+
+                {/* Interactive Pose Switcher Bar */}
+                <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/95 backdrop-blur-md border border-gestura-border shadow-xs">
+                  {gestureList.map((g) => (
+                    <button
+                      key={g.id}
+                      onClick={() => setSelectedDemoGesture(g.id)}
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold transition-all ${
+                        selectedDemoGesture === g.id
+                          ? 'bg-gestura-yellow text-white shadow-xs scale-105'
+                          : 'bg-gestura-surface text-slate-600 hover:text-gestura-text hover:bg-gestura-goldLight'
+                      }`}
+                    >
+                      {g.emoji} {g.name.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Quick Gesture Selector Carousel Below Hero */}
-        <div className="max-w-6xl mx-auto mt-14 pt-8 border-t border-rose-100">
-          <div className="text-center mb-5">
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-500">
-              Interactive 3D Inspector
-            </span>
-            <h3 className="font-display font-bold text-slate-800 text-lg">
-              Click Any Gesture to Morph the 3D Hand Model
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-            {gestureList.map((g) => {
-              const isSelected = selectedDemoGesture === g.id;
-              return (
-                <button
-                  key={g.id}
-                  onClick={() => setSelectedDemoGesture(g.id)}
-                  className={`p-3 rounded-2xl text-center border transition-all active:scale-95 flex flex-col items-center gap-1.5 ${
-                    isSelected
-                      ? 'bg-rose-500 text-white border-rose-600 shadow-glow-pink scale-105'
-                      : 'bg-white/80 hover:bg-rose-50/50 border-rose-100 text-slate-700 shadow-xs'
-                  }`}
-                >
-                  <span className="text-2xl">{g.emoji}</span>
-                  <p className="text-xs font-bold truncate w-full">{g.name}</p>
-                  <span className={`text-[10px] truncate w-full ${isSelected ? 'text-rose-100' : 'text-slate-400'}`}>
-                    {g.action}
-                  </span>
-                </button>
-              );
-            })}
           </div>
         </div>
       </section>
 
-      {/* How It Works Section (Section 6 Requirements) */}
-      <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-[#FFF8FA] to-transparent">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-bold tracking-widest uppercase text-rose-600 bg-rose-50 px-3.5 py-1 rounded-full border border-rose-200">
-              Pipeline Architecture
+      {/* 2. HOW IT WORKS / 4-STEP PIPELINE SECTION */}
+      <section id="how-it-works" className="py-20 border-y border-gestura-border bg-white/70 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="px-3.5 py-1 rounded-full bg-gestura-goldLight text-gestura-text font-mono text-xs font-bold border border-gestura-border shadow-xs">
+              FOUR-STEP COMPUTER VISION PIPELINE
             </span>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-slate-900 tracking-tight">
-              How Gestura AI Works
+            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-slate-900 mt-3">
+              How GESTURA AI Works
             </h2>
-            <p className="text-sm sm:text-base text-slate-600">
-              Four synchronized stages transform live webcam optical data into fluid, native desktop automation.
+            <p className="text-sm text-slate-500 mt-3 leading-relaxed">
+              From raw camera photons to sub-pixel desktop cursor movement in under 8 milliseconds.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((st) => (
               <div
-                key={st.num}
-                className="relative rounded-3xl p-6 glass-panel border border-rose-200/60 shadow-soft hover:shadow-soft-lg hover:-translate-y-1.5 transition-all flex flex-col justify-between group"
+                key={st.step}
+                className="p-6 rounded-3xl bg-gestura-surface border border-gestura-border shadow-card-soft flex flex-col gap-3 hover:-translate-y-1 transition-all duration-300"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="font-display font-black text-3xl text-rose-300 group-hover:text-rose-500 transition-colors">
-                      {st.num}
-                    </span>
-                    <div className="p-2.5 rounded-2xl bg-white shadow-xs border border-rose-100">
-                      {st.icon}
-                    </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-gestura-text px-2.5 py-0.5 rounded-full bg-gestura-goldLight">
+                    {st.step}
+                  </span>
+                  <div className="w-10 h-10 rounded-xl bg-gestura-goldLight border border-gestura-border flex items-center justify-center">
+                    {st.icon}
                   </div>
-                  <h3 className="font-display font-bold text-slate-900 text-lg mb-2">
-                    {st.title}
-                  </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {st.desc}
-                  </p>
                 </div>
-
-                <div className="mt-6 pt-3 border-t border-rose-100/70 flex items-center gap-1.5 text-[11px] font-semibold text-rose-600">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  <span>Real-Time Execution</span>
-                </div>
+                <h4 className="font-display font-bold text-slate-900 text-base">{st.title}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">{st.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Safety & Architecture Highlights */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto rounded-3xl p-8 sm:p-12 glass-panel-elevated border border-rose-200 shadow-soft-lg bg-gradient-to-r from-rose-50/40 via-white to-pink-50/30">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            <div className="space-y-3">
-              <span className="text-xs font-bold text-rose-600 uppercase tracking-wider">
-                Security & Safety Failsafe
-              </span>
-              <h3 className="font-display font-black text-2xl sm:text-3xl text-slate-900">
-                Engineered with Zero-Risk Protocols.
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                We believe touchless computing must be completely safe, transparent, and controllable.
-              </p>
-            </div>
+      {/* 3. 7 CORE GESTURES SHOWCASE */}
+      <section id="gestures" className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <span className="px-3.5 py-1 rounded-full bg-gestura-goldLight text-gestura-text font-mono text-xs font-bold border border-gestura-border shadow-xs">
+            NATURAL GESTURE VOCABULARY
+          </span>
+          <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-slate-900 mt-3">
+            7 Purpose-Built Gesture Commands
+          </h2>
+          <p className="text-sm text-slate-500 mt-3">
+            Engineered for low fatigue, ergonomic hand posture, and zero accidental false activations.
+          </p>
+        </div>
 
-            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-white border border-rose-100 shadow-xs flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-rose-50 text-rose-600 shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {gestureList.map((g) => (
+            <Link
+              key={g.id}
+              to="/gestures"
+              className="p-6 rounded-3xl bg-white hover:bg-gestura-surface border border-gestura-border shadow-card-soft transition-all flex flex-col justify-between gap-4 select-none group hover:border-gestura-yellow"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-3xl group-hover:scale-110 transition-transform">{g.emoji}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-gestura-goldLight border border-gestura-border text-[10px] font-mono font-bold text-gestura-text">
+                    {g.badge}
+                  </span>
                 </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">100% On-Device Inference</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Webcam frames never leave your local device. MediaPipe processes everything locally.
-                  </p>
-                </div>
+                <h4 className="font-display font-bold text-slate-900 text-base mb-1">{g.name}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">{g.description}</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-rose-100 shadow-xs flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-red-50 text-red-600 shrink-0">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">Instant Emergency Stop</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    One-click physical failsafe releases all mouse keys and disarms active automation.
-                  </p>
-                </div>
+              <div className="pt-3 border-t border-gestura-border flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-gestura-text bg-gestura-goldLight px-2 py-0.5 rounded">
+                  {g.action}
+                </span>
+                <ArrowRight className="w-3.5 h-3.5 text-gestura-textMuted group-hover:translate-x-1 transition-transform" />
               </div>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-              <div className="p-4 rounded-2xl bg-white border border-rose-100 shadow-xs flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-pink-50 text-pink-600 shrink-0">
-                  <Activity className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">Anti-Tremor EMA Filter</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Exponential moving averages and deadzone filters eliminate hand shakes and unintended clicks.
-                  </p>
-                </div>
-              </div>
+      {/* 4. FEATURES GRID */}
+      <section id="features" className="py-20 border-y border-gestura-border bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="px-3.5 py-1 rounded-full bg-gestura-goldLight text-gestura-text font-mono text-xs font-bold border border-gestura-border shadow-xs">
+              SYSTEM CAPABILITIES
+            </span>
+            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-slate-900 mt-3">
+              Comprehensive Computer Control Features
+            </h2>
+            <p className="text-sm text-slate-500 mt-3">
+              Full desktop mouse replacement engineered for accuracy, ergonomics, and seamless safety.
+            </p>
+          </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-rose-100 shadow-xs flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-purple-50 text-purple-600 shrink-0">
-                  <Zap className="w-5 h-5" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((f) => (
+              <div
+                key={f.title}
+                className="p-6 rounded-3xl bg-gestura-surface border border-gestura-border shadow-card-soft flex flex-col gap-3 hover:border-gestura-yellow transition-all"
+              >
+                <div className="w-10 h-10 rounded-2xl bg-gestura-goldLight border border-gestura-border flex items-center justify-center shadow-xs">
+                  {f.icon}
                 </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">Sub-Millisecond Response</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Direct local WebSocket architecture communicates between web client and Python controller.
-                  </p>
-                </div>
+                <h3 className="font-display font-bold text-slate-900 text-base">{f.title}</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">{f.desc}</p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Launch CTA Strip */}
-      <section className="pb-20 px-4 sm:px-6 lg:px-8 text-center">
-        <div className="max-w-4xl mx-auto rounded-3xl p-10 bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 text-white shadow-glow-pink space-y-5">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white">
-            Ready to Control Your Computer with Your Hands?
-          </h2>
-          <p className="text-rose-100 text-sm sm:text-base max-w-xl mx-auto">
-            Open the real-time Gesture Control Dashboard, activate your webcam, and experience seamless touchless computing.
-          </p>
-          <div className="pt-2">
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-white text-rose-600 hover:bg-rose-50 font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all"
-            >
-              <Sparkles className="w-5 h-5 text-rose-500" />
-              Open Gesture Dashboard Now
-            </Link>
+      {/* 5. CTA BANNER */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-3xl p-10 sm:p-14 bg-gestura-yellow hover:bg-gestura-yellowHover text-white shadow-yellow-glow text-center flex flex-col items-center gap-6">
+          <div className="w-16 h-16 rounded-3xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shadow-inner">
+            <Sparkles className="w-8 h-8 text-white" />
           </div>
+
+          <h2 className="font-display font-black text-3xl sm:text-5xl tracking-tight">
+            Ready for Touchless Computing?
+          </h2>
+
+          <p className="text-base text-gray-300 max-w-xl font-medium">
+            Launch the live optical control dashboard, calibrate sensitivity, and test touchless mouse control in real-time.
+          </p>
+
+          <Link
+            to="/dashboard"
+            className="px-8 py-4 rounded-2xl bg-white hover:bg-gestura-goldLight text-gestura-text font-bold text-base shadow-lg transition-all active:scale-95 flex items-center gap-2"
+          >
+            Launch Gesture Control
+            <ArrowRight className="w-5 h-5 text-gestura-text" />
+          </Link>
         </div>
       </section>
     </div>

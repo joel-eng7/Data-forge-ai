@@ -1,21 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Activity,
-  Cpu,
-  Fingerprint,
   Zap,
+  Activity,
   CheckCircle2,
   Circle,
-  HelpCircle,
   Clock,
   Sparkles,
-  BarChart3
+  Layers,
+  Box
 } from 'lucide-react';
 import { DetectedGestureState } from './useHandDetection';
+import Hand3DCanvas from '../components/Hand3DCanvas';
 
 interface AIDetectionPanelProps {
   currentGesture: DetectedGestureState;
-  handCount: number;
+  handCount?: number;
+  isTracking?: boolean;
   fps: number;
   latency: number;
   modelStatus: string;
@@ -25,12 +25,15 @@ interface AIDetectionPanelProps {
 export default function AIDetectionPanel({
   currentGesture,
   handCount,
+  isTracking: isTrackingProp,
   fps,
   latency,
   modelStatus,
   isBackendConnected
 }: AIDetectionPanelProps) {
-  const isTracking = handCount > 0;
+  const [show3DTwin, setShow3DTwin] = useState<boolean>(true);
+  const isTracking = isTrackingProp ?? ((handCount ?? 0) > 0);
+
   const fingers = [
     { label: 'Thumb', active: currentGesture.fingerStates.thumb },
     { label: 'Index', active: currentGesture.fingerStates.index },
@@ -40,139 +43,182 @@ export default function AIDetectionPanel({
   ];
 
   return (
-    <div className="rounded-3xl p-6 glass-panel border border-gestura-border shadow-card-soft flex flex-col gap-5 bg-white">
+    <div className="rounded-3xl p-6 bg-white/90 backdrop-blur-xl border border-gestura-border shadow-card-glass flex flex-col gap-5">
       {/* Panel Header */}
       <div className="flex items-center justify-between pb-3 border-b border-gestura-border">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gestura-yellow text-gestura-text flex items-center justify-center shadow-yellow-subtle">
-            <Zap className="w-5 h-5 fill-gestura-text" />
+          <div className="w-9 h-9 rounded-xl bg-gestura-yellow text-white flex items-center justify-center shadow-yellow-subtle font-bold">
+            <Zap className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-display font-bold text-gestura-text text-lg">AI Detection Engine</h3>
-            <p className="text-xs text-gestura-textMuted font-mono">
-              Biomechanical 83-Feature Random Forest
-            </p>
+            <h3 className="font-display font-bold text-slate-900 text-lg">AI Detection Engine</h3>
+            <p className="text-xs text-slate-500">21-Landmark Kinematic Classifier</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="flex h-2.5 w-2.5 relative">
-            <span
-              className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                isTracking ? 'bg-gestura-yellow' : 'bg-gray-300'
-              }`}
-            />
-            <span
-              className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                isTracking ? 'bg-gestura-yellow' : 'bg-gray-400'
-              }`}
-            />
-          </span>
-          <span className="text-xs font-mono font-medium text-gestura-textMuted">
-            {isTracking ? 'TRACKING' : 'SEARCHING'}
+          <button
+            onClick={() => setShow3DTwin(prev => !prev)}
+            className={`px-2.5 py-1 rounded-xl text-xs font-semibold border flex items-center gap-1 transition-all ${
+              show3DTwin
+                ? 'bg-gestura-goldLight text-gestura-text border-gestura-yellow shadow-xs font-bold'
+                : 'bg-white text-slate-500 border-gestura-border'
+            }`}
+            title="Toggle Live 3D Digital Twin"
+          >
+            <Box className="w-3.5 h-3.5" />
+            3D Twin
+          </button>
+
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1.5 ${
+              isTracking
+                ? 'bg-gestura-goldLight text-gestura-text border-gestura-border'
+                : 'bg-slate-50 text-slate-500 border-slate-200'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${isTracking ? 'bg-gestura-goldLight0 animate-pulse' : 'bg-slate-400'}`} />
+            {isTracking ? 'Hand Locked' : 'Searching'}
           </span>
         </div>
       </div>
 
-      {/* Main Detected Gesture Card */}
-      <div className="rounded-2xl p-5 bg-gestura-goldLight border border-gestura-yellow/40 shadow-yellow-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className="w-16 h-16 rounded-2xl bg-white border border-gestura-yellow/60 flex items-center justify-center text-3xl shadow-sm shrink-0">
-            {currentGesture.emoji}
+      {/* Primary Current Gesture Card */}
+      <div className="p-4 rounded-2xl bg-gestura-goldLight/70 border border-gestura-border shadow-xs flex items-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-white shadow-soft flex items-center justify-center text-3xl border border-gestura-border shrink-0">
+          {currentGesture.emoji}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-gestura-text">Active Gesture</span>
+            <span className="text-xs font-mono font-bold text-slate-800">{currentGesture.confidence}% Confidence</span>
           </div>
-          <div>
-            <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-gestura-textSubtle">
-              Classified Intent
+          <h4 className="font-display font-bold text-slate-900 text-lg truncate mt-0.5">
+            {currentGesture.name}
+          </h4>
+          <p className="text-xs text-slate-500 truncate mt-0.5 flex items-center gap-1">
+            <span className="font-semibold text-gestura-text">Action:</span> {currentGesture.action}
+          </p>
+        </div>
+      </div>
+
+      {/* Interactive 3D Digital Twin Hand (Real-time gesture mirroring!) */}
+      {show3DTwin && (
+        <div className="relative rounded-2xl p-2 bg-gestura-surface border border-gestura-border overflow-hidden shadow-inner">
+          <div className="flex items-center justify-between px-2 pt-1 pb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gestura-text flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-gestura-text" />
+              Live 3D Hand Digital Twin
             </span>
-            <h4 className="font-display font-extrabold text-gestura-text text-2xl tracking-tight">
-              {currentGesture.name}
-            </h4>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="px-2.5 py-0.5 rounded-full bg-gestura-yellow text-gestura-text font-bold text-xs font-mono">
-                {currentGesture.action}
-              </span>
-              {currentGesture.isConfirmed && (
-                <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                  Confirmed
-                </span>
-              )}
-            </div>
+            <span className="text-[10px] text-slate-400 font-mono">
+              Pose: {currentGesture.gesture}
+            </span>
           </div>
-        </div>
-
-        {/* Confidence Gauge Radial Display */}
-        <div className="flex flex-col items-center sm:items-end w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-gestura-yellow/30">
-          <span className="text-[11px] font-mono text-gestura-textSubtle">Model Confidence</span>
-          <div className="text-3xl font-display font-extrabold text-gestura-text mt-0.5">
-            {(currentGesture.confidence * 100).toFixed(0)}%
-          </div>
-          <div className="w-32 h-2 rounded-full bg-white border border-gestura-yellow/40 overflow-hidden mt-1.5">
-            <div
-              className="h-full bg-gestura-yellow transition-all duration-300 rounded-full"
-              style={{ width: `${Math.max(5, currentGesture.confidence * 100)}%` }}
+          <div className="w-full h-44 rounded-xl overflow-hidden relative">
+            <Hand3DCanvas
+              currentGesture={currentGesture.gesture !== 'NO_HAND' ? currentGesture.gesture : 'OPEN_PALM'}
+              interactive={true}
+              autoRotate={false}
+              showParticles={false}
+              className="w-full h-full"
+              zoom={1.15}
             />
           </div>
         </div>
+      )}
+
+      {/* Confidence & Kinematics Gauges */}
+      <div>
+        <div className="flex justify-between items-center text-xs mb-1.5">
+          <span className="text-slate-600 font-medium">Inference Confidence Score</span>
+          <span className="font-mono font-bold text-gestura-text">{currentGesture.confidence}%</span>
+        </div>
+        <div className="w-full h-2.5 rounded-full bg-gestura-goldLight p-0.5 overflow-hidden border border-gestura-border">
+          <div
+            className="h-full rounded-full bg-gestura-yellow transition-all duration-300 shadow-sm"
+            style={{ width: `${currentGesture.confidence}%` }}
+          />
+        </div>
       </div>
 
-      {/* 5-Finger Biomechanical Extension States */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-mono font-bold text-gestura-textSubtle uppercase tracking-wider">
-            Phalangeal Extension Telemetry
+      {/* Five Finger Kinematics Breakdown */}
+      <div className="p-3.5 rounded-2xl bg-white border border-gestura-border shadow-xs">
+        <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+          <span>Finger Joint Kinematics</span>
+          <span className="text-[10px] font-mono text-slate-400 font-normal">
+            Pinch Dist: {currentGesture.metrics.pinchDistance.toFixed(2)}
           </span>
-          <span className="text-[11px] text-gestura-textSubtle font-mono">
-            {fingers.filter((f) => f.active).length} / 5 Extended
-          </span>
-        </div>
-
+        </p>
         <div className="grid grid-cols-5 gap-2">
-          {fingers.map((f, i) => (
+          {fingers.map((f) => (
             <div
-              key={i}
-              className={`p-2.5 rounded-xl border flex flex-col items-center text-center transition-all ${
+              key={f.label}
+              className={`p-2 rounded-xl text-center border transition-all ${
                 f.active
-                  ? 'bg-gestura-goldLight border-gestura-yellow shadow-yellow-subtle'
-                  : 'bg-gestura-surface border-gestura-border opacity-60'
+                  ? 'bg-gestura-goldLight border-gestura-yellow text-gestura-text font-bold shadow-xs'
+                  : 'bg-slate-50 border-slate-200 text-slate-400'
               }`}
             >
-              <span className="text-[11px] font-medium text-gestura-text mb-1 font-mono">{f.label}</span>
-              <div
-                className={`w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors ${
-                  f.active ? 'bg-gestura-yellow text-gestura-text shadow-sm' : 'bg-gray-300'
-                }`}
-              >
-                {f.active && <Circle className="w-1.5 h-1.5 fill-gestura-text" />}
+              <div className="flex justify-center mb-1">
+                {f.active ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-gestura-text" />
+                ) : (
+                  <Circle className="w-3.5 h-3.5 text-slate-300" />
+                )}
               </div>
+              <p className="text-[11px] leading-tight">{f.label}</p>
+              <span className="text-[9px] uppercase tracking-wider font-mono">
+                {f.active ? 'EXT' : 'CURL'}
+              </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Real-Time Mathematical Metrics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-gestura-border text-center">
-        <div className="p-2.5 rounded-xl bg-gestura-surface border border-gestura-border">
-          <span className="text-[10px] font-mono text-gestura-textSubtle uppercase block">Pinch Distance</span>
-          <span className="font-mono font-bold text-gestura-text text-sm">
-            {currentGesture.metrics.pinchDistance.toFixed(3)}
-          </span>
+      {/* Pipeline Telemetry Grid */}
+      <div className="grid grid-cols-2 gap-3 pt-1">
+        <div className="p-3 rounded-2xl bg-white border border-gestura-border shadow-xs">
+          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Processing Rate</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-mono font-bold text-lg text-slate-900">{fps}</span>
+            <span className="text-xs text-slate-500 font-medium">FPS</span>
+          </div>
         </div>
 
-        <div className="p-2.5 rounded-xl bg-gestura-surface border border-gestura-border">
-          <span className="text-[10px] font-mono text-gestura-textSubtle uppercase block">2-Finger Pinch</span>
-          <span className="font-mono font-bold text-gestura-text text-sm">
-            {currentGesture.metrics.twoFingerPinchDistance.toFixed(3)}
-          </span>
+        <div className="p-3 rounded-2xl bg-white border border-gestura-border shadow-xs">
+          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Inference Latency</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-mono font-bold text-lg text-gestura-text">{latency}</span>
+            <span className="text-xs text-slate-500 font-medium">ms</span>
+          </div>
         </div>
 
-        <div className="p-2.5 rounded-xl bg-gestura-surface border border-gestura-border">
-          <span className="text-[10px] font-mono text-gestura-textSubtle uppercase block">Inference Latency</span>
-          <span className="font-mono font-bold text-gestura-text text-sm">{latency} ms</span>
+        <div className="p-3 rounded-2xl bg-white border border-gestura-border shadow-xs">
+          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Vision Model</span>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                modelStatus === 'ready' ? 'bg-emerald-500' : 'bg-slate-400 animate-pulse'
+              }`}
+            />
+            <span className="text-xs font-semibold text-slate-700 capitalize">
+              {modelStatus === 'ready' ? 'GPU Accelerated' : modelStatus}
+            </span>
+          </div>
         </div>
 
-        <div className="p-2.5 rounded-xl bg-gestura-surface border border-gestura-border">
-          <span className="text-[10px] font-mono text-gestura-textSubtle uppercase block">Optical FPS</span>
-          <span className="font-mono font-bold text-gestura-text text-sm">{fps} fps</span>
+        <div className="p-3 rounded-2xl bg-white border border-gestura-border shadow-xs">
+          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Python Engine</span>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isBackendConnected ? 'bg-emerald-500' : 'bg-slate-400'
+              }`}
+            />
+            <span className="text-xs font-semibold text-slate-700">
+              {isBackendConnected ? 'PyAutoGUI Active' : 'Standby / Web'}
+            </span>
+          </div>
         </div>
       </div>
     </div>

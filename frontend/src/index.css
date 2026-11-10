@@ -9,30 +9,35 @@
   }
 }
 
-/* Glassmorphism with Strict Yellow & Warm White Styling */
+/* Glassmorphism with Premium Yellow & Pure White 3D Styling */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.90);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(239, 236, 230, 0.95);
-  box-shadow: 0 10px 30px -10px rgba(23, 23, 23, 0.05);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(234, 230, 217, 0.90);
+  box-shadow: 0 10px 30px -10px rgba(23, 23, 23, 0.04);
 }
 
-.glass-panel-yellow {
-  background: rgba(255, 253, 245, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 214, 51, 0.35);
-  box-shadow: 0 12px 35px -8px rgba(255, 214, 51, 0.15);
+.glass-panel-elevated {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 214, 51, 0.40);
+  box-shadow: 0 18px 45px -10px rgba(255, 214, 51, 0.12);
 }
 
 .glass-pill {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 214, 51, 0.4);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 214, 51, 0.45);
+  box-shadow: 0 4px 15px rgba(255, 214, 51, 0.10);
 }
 
-/* Custom Scrollbar in Yellow & White */
+.shadow-glow-yellow {
+  box-shadow: 0 0 25px rgba(255, 214, 51, 0.45);
+}
+
+/* Luxury Custom Scrollbar in Warm Gold & Off-White */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

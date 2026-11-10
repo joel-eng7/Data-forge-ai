@@ -177,6 +177,78 @@ class ComputerController:
             self._log_activity("LEFT_CLICK_ERROR", str(e), success=False)
             return False
 
+    def mouse_down(self, button: str = 'left') -> bool:
+        """
+        Presses and holds the mouse button down (for drag-and-drop).
+        """
+        if config.emergency_stopped:
+            return False
+        if not self.is_left_button_down:
+            try:
+                pyautogui.mouseDown(button=button)
+                self.is_left_button_down = True
+                self._log_activity(
+                    action="DRAG_START",
+                    details=f"{button.capitalize()} button held down for dragging",
+                    success=True
+                )
+                return True
+            except Exception as e:
+                self._log_activity("MOUSE_DOWN_ERROR", str(e), success=False)
+                return False
+        return True
+
+    def mouse_up(self, button: str = 'left') -> bool:
+        """
+        Releases the held mouse button (drop).
+        """
+        if self.is_left_button_down:
+            try:
+                pyautogui.mouseUp(button=button)
+                self.is_left_button_down = False
+                self._log_activity(
+                    action="DRAG_RELEASE",
+                    details=f"{button.capitalize()} button released (dropped)",
+                    success=True
+                )
+                return True
+            except Exception as e:
+                self._log_activity("MOUSE_UP_ERROR", str(e), success=False)
+                return False
+        return False
+
+    def toggle_tracking(self) -> bool:
+        """
+        Toggles cursor tracking on / off (Open Palm action).
+        """
+        config.mouse_enabled = not config.mouse_enabled
+        self._log_activity(
+            action="TRACKING_TOGGLE",
+            details=f"Cursor tracking {'ACTIVATED' if config.mouse_enabled else 'PAUSED'}",
+            success=True
+        )
+        return config.mouse_enabled
+
+    def confirm_action(self) -> bool:
+        """
+        Triggers keyboard Enter/Confirm on Thumbs Up.
+        """
+        now = time.time()
+        if now - self.last_left_click_time < 0.6:  # 600ms debounce
+            return False
+        self.last_left_click_time = now
+        try:
+            pyautogui.press('enter')
+            self._log_activity(
+                action="CONFIRM_SELECT",
+                details="Enter key executed for modal/dialog selection",
+                success=True
+            )
+            return True
+        except Exception as e:
+            self._log_activity("CONFIRM_ERROR", str(e), success=False)
+            return False
+
     def right_click(self) -> bool:
         """
         Triggers a right mouse click with cooldown debounce.
